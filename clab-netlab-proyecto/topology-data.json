@@ -1,0 +1,496 @@
+{
+  "name": "netlab-proyecto",
+  "type": "clab",
+  "clab": {
+    "config": {
+      "prefix": "clab",
+      "mgmt": {
+        "network": "clab",
+        "bridge": "br-fc2c445e3811",
+        "ipv4-subnet": "172.20.20.0/24",
+        "ipv4-gw": "172.20.20.1",
+        "ipv6-subnet": "3fff:172:20:20::/64",
+        "ipv6-gw": "3fff:172:20:20::1",
+        "external-access": true,
+        "ipam": {
+          "provider": "containerlab"
+        }
+      }
+    }
+  },
+  "ssh-pub-keys": [],
+  "nodes": {
+    "externo": {
+      "index": "0",
+      "shortname": "externo",
+      "longname": "clab-netlab-proyecto-externo",
+      "fqdn": "externo.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/externo",
+      "kind": "linux",
+      "image": "alpine:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.8",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::8",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/externo",
+        "clab-node-longname": "clab-netlab-proyecto-externo",
+        "clab-node-name": "externo",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "pc-admin": {
+      "index": "1",
+      "shortname": "pc-admin",
+      "longname": "clab-netlab-proyecto-pc-admin",
+      "fqdn": "pc-admin.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/pc-admin",
+      "kind": "linux",
+      "image": "alpine:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.2",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::2",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/pc-admin",
+        "clab-node-longname": "clab-netlab-proyecto-pc-admin",
+        "clab-node-name": "pc-admin",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "pc-ventas": {
+      "index": "2",
+      "shortname": "pc-ventas",
+      "longname": "clab-netlab-proyecto-pc-ventas",
+      "fqdn": "pc-ventas.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/pc-ventas",
+      "kind": "linux",
+      "image": "alpine:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.9",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::9",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/pc-ventas",
+        "clab-node-longname": "clab-netlab-proyecto-pc-ventas",
+        "clab-node-name": "pc-ventas",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "r1": {
+      "index": "3",
+      "shortname": "r1",
+      "longname": "clab-netlab-proyecto-r1",
+      "fqdn": "r1.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/r1",
+      "kind": "linux",
+      "image": "frrouting/frr:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.10",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::a",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/r1",
+        "clab-node-longname": "clab-netlab-proyecto-r1",
+        "clab-node-name": "r1",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "r2": {
+      "index": "4",
+      "shortname": "r2",
+      "longname": "clab-netlab-proyecto-r2",
+      "fqdn": "r2.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/r2",
+      "kind": "linux",
+      "image": "frrouting/frr:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.3",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::3",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/r2",
+        "clab-node-longname": "clab-netlab-proyecto-r2",
+        "clab-node-name": "r2",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "r3": {
+      "index": "5",
+      "shortname": "r3",
+      "longname": "clab-netlab-proyecto-r3",
+      "fqdn": "r3.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/r3",
+      "kind": "linux",
+      "image": "frrouting/frr:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.4",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::4",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/r3",
+        "clab-node-longname": "clab-netlab-proyecto-r3",
+        "clab-node-name": "r3",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "srv-datos": {
+      "index": "6",
+      "shortname": "srv-datos",
+      "longname": "clab-netlab-proyecto-srv-datos",
+      "fqdn": "srv-datos.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/srv-datos",
+      "kind": "linux",
+      "image": "alpine:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.5",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::5",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/srv-datos",
+        "clab-node-longname": "clab-netlab-proyecto-srv-datos",
+        "clab-node-name": "srv-datos",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "srv-web": {
+      "index": "7",
+      "shortname": "srv-web",
+      "longname": "clab-netlab-proyecto-srv-web",
+      "fqdn": "srv-web.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/srv-web",
+      "kind": "linux",
+      "image": "alpine:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.6",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::6",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/srv-web",
+        "clab-node-longname": "clab-netlab-proyecto-srv-web",
+        "clab-node-name": "srv-web",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "sw-a": {
+      "index": "8",
+      "shortname": "sw-a",
+      "longname": "clab-netlab-proyecto-sw-a",
+      "fqdn": "sw-a.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/sw-a",
+      "kind": "linux",
+      "image": "alpine:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.11",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::b",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/sw-a",
+        "clab-node-longname": "clab-netlab-proyecto-sw-a",
+        "clab-node-name": "sw-a",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    },
+    "sw-b": {
+      "index": "9",
+      "shortname": "sw-b",
+      "longname": "clab-netlab-proyecto-sw-b",
+      "fqdn": "sw-b.netlab-proyecto.io",
+      "group": "",
+      "labdir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/sw-b",
+      "kind": "linux",
+      "image": "alpine:latest",
+      "mgmt-net": "clab",
+      "mgmt-intf": "",
+      "mgmt-ipv4-address": "172.20.20.7",
+      "mgmt-ipv4-prefix-length": 24,
+      "mgmt-ipv6-address": "3fff:172:20:20::7",
+      "mgmt-ipv6-prefix-length": 64,
+      "mac-address": "",
+      "labels": {
+        "clab-mgmt-net-bridge": "br-fc2c445e3811",
+        "clab-node-group": "",
+        "clab-node-kind": "linux",
+        "clab-node-lab-dir": "/home/hevian/containerlab/proyecto/clab-netlab-proyecto/sw-b",
+        "clab-node-longname": "clab-netlab-proyecto-sw-b",
+        "clab-node-name": "sw-b",
+        "clab-node-type": "",
+        "clab-owner": "hevian",
+        "clab-topo-file": "/home/hevian/containerlab/proyecto/netlab.clab.yml",
+        "containerlab": "netlab-proyecto"
+      },
+      "port-bindings": [
+      ]
+    }
+  },
+  "links": [
+    {
+      "endpoints": {
+        "a": {
+          "node": "r2",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:c7:b2:b6",
+          "peer": "z"
+        },
+        "z": {
+          "node": "sw-a",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:6b:12:d9",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "sw-a",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:75:2b:d6",
+          "peer": "z"
+        },
+        "z": {
+          "node": "pc-admin",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:43:ec:b6",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "sw-a",
+          "interface": "eth3",
+          "mac": "aa:c1:ab:3f:a5:fd",
+          "peer": "z"
+        },
+        "z": {
+          "node": "pc-ventas",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:59:89:9a",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "r2",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:60:34:f5",
+          "peer": "z"
+        },
+        "z": {
+          "node": "r3",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:a6:88:3d",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "r3",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:4f:85:4c",
+          "peer": "z"
+        },
+        "z": {
+          "node": "r1",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:fe:18:8b",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "r2",
+          "interface": "eth3",
+          "mac": "aa:c1:ab:6f:66:df",
+          "peer": "z"
+        },
+        "z": {
+          "node": "r1",
+          "interface": "eth3",
+          "mac": "aa:c1:ab:38:bf:5f",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "r1",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:66:a2:85",
+          "peer": "z"
+        },
+        "z": {
+          "node": "sw-b",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:9f:87:e9",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "sw-b",
+          "interface": "eth2",
+          "mac": "aa:c1:ab:3a:9f:cb",
+          "peer": "z"
+        },
+        "z": {
+          "node": "srv-web",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:e6:df:df",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "sw-b",
+          "interface": "eth3",
+          "mac": "aa:c1:ab:63:11:77",
+          "peer": "z"
+        },
+        "z": {
+          "node": "srv-datos",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:58:ca:ca",
+          "peer": "a"
+        }
+      }
+    },
+    {
+      "endpoints": {
+        "a": {
+          "node": "r1",
+          "interface": "eth4",
+          "mac": "aa:c1:ab:b3:ca:49",
+          "peer": "z"
+        },
+        "z": {
+          "node": "externo",
+          "interface": "eth1",
+          "mac": "aa:c1:ab:08:37:65",
+          "peer": "a"
+        }
+      }
+    }
+  ]
+}

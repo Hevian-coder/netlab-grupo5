@@ -1,0 +1,45 @@
+name: netlab-proyecto
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+    r3:
+      kind: linux
+      image: frrouting/frr:latest
+    sw-a:
+      kind: linux
+      image: alpine:latest
+    sw-b:
+      kind: linux
+      image: alpine:latest
+    pc-admin:
+      kind: linux
+      image: alpine:latest
+    pc-ventas:
+      kind: linux
+      image: alpine:latest
+    srv-web:
+      kind: linux
+      image: alpine:latest
+    srv-datos:
+      kind: linux
+      image: alpine:latest
+    externo:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["r2:eth1", "sw-a:eth1"]
+    - endpoints: ["sw-a:eth2", "pc-admin:eth1"]
+    - endpoints: ["sw-a:eth3", "pc-ventas:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r1:eth2"]
+    - endpoints: ["r2:eth3", "r1:eth3"]
+    - endpoints: ["r1:eth1", "sw-b:eth1"]
+    - endpoints: ["sw-b:eth2", "srv-web:eth1"]
+    - endpoints: ["sw-b:eth3", "srv-datos:eth1"]
+    - endpoints: ["r1:eth4", "externo:eth1"]

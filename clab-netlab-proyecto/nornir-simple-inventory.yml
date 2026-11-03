@@ -1,0 +1,51 @@
+---
+externo:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.8
+pc-admin:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.2
+pc-ventas:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.9
+r1:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.10
+r2:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.3
+r3:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.4
+srv-datos:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.5
+srv-web:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.6
+sw-a:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.11
+sw-b:
+    username: 
+    password: 
+    platform: linux
+    hostname: 172.20.20.7

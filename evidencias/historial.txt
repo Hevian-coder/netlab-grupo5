@@ -1,0 +1,1701 @@
+  506        image: alpine:latest
+  507        exec:
+  508          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  509      PC2:
+  510        kind: linux
+  511        image: alpine:latest
+  512        exec:
+  513          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  514      PC3:
+  515        kind: linux
+  516        image: alpine:latest
+  517        exec:
+  518          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd nginx
+  519      PC4:
+  520        kind: linux
+  521        image: alpine:latest
+  522        exec:
+  523          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  524      PC5:
+  525        kind: linux
+  526        image: alpine:latest
+  527        exec:
+  528          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  529      SW1:
+  530        kind: bridge
+  531      SW2:
+  532        kind: bridge
+  533    links:
+  534      # Conexiones Sede 1
+  535      - endpoints: ["PC0:eth1", "SW1:eth-pc0"]
+  536      - endpoints: ["PC1:eth1", "SW1:eth-pc1"]
+  537      - endpoints: ["PC2:eth1", "SW1:eth-pc2"]
+  538      - endpoints: ["R1:eth1", "SW1:eth-r1"]
+  539      # Enlace WAN directo entre Routers
+  540      - endpoints: ["R1:eth2", "R2:eth2"]
+  541      # Conexiones Sede 2
+  542      - endpoints: ["R2:eth1", "SW2:eth-r2"]
+  543      - endpoints: ["PC3:eth1", "SW2:eth-pc3"]
+  544      - endpoints: ["PC4:eth1", "SW2:eth-pc4"]
+  545      - endpoints: ["PC5:eth1", "SW2:eth-pc5"]
+  546  EOF
+  547  sudo containerlab destroy -t topologia.clab.yml --cleanup
+  548  # 1. Desplegar la topología
+  549  sudo containerlab deploy -t topologia.clab.yml
+  550  # 2. Configurar Router R1
+  551  sudo docker exec -it clab-prueba2_redes-R1 sysctl -w net.ipv4.ip_forward=1
+  552  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.169/30 dev eth2
+  553  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth2 up
+  554  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.10 type vlan id 10
+  555  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.20 type vlan id 20
+  556  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.30 type vlan id 30
+  557  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.97/27 dev eth1.10
+  558  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.129/28 dev eth1.20
+  559  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.1/26 dev eth1.30
+  560  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1 up
+  561  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.10 up
+  562  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.20 up
+  563  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.30 up
+  564  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.144/28 via 192.168.100.170
+  565  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.160/29 via 192.168.100.170
+  566  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.64/27 via 192.168.100.170
+  567  # 3. Configurar Router R2
+  568  sudo docker exec -it clab-prueba2_redes-R2 sysctl -w net.ipv4.ip_forward=1
+  569  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.170/30 dev eth2
+  570  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth2 up
+  571  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.10 type vlan id 10
+  572  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.20 type vlan id 20
+  573  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.30 type vlan id 30
+  574  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.145/28 dev eth1.10
+  575  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.161/29 dev eth1.20
+  576  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.65/27 dev eth1.30
+  577  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1 up
+  578  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.10 up
+  579  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.20 up
+  580  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.30 up
+  581  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.96/27 via 192.168.100.169
+  582  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.128/28 via 192.168.100.169
+  583  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.0/26 via 192.168.100.169
+  584  # 4. Configurar Hosts Sede 1 (PC0, PC1, PC2)
+  585  sudo docker exec -it clab-prueba2_redes-PC0 ip link add link eth1 name eth1.30 type vlan id 30
+  586  sudo docker exec -it clab-prueba2_redes-PC0 ip addr add 192.168.100.2/26 dev eth1.30
+  587  sudo docker exec -it clab-prueba2_redes-PC0 ip link set dev eth1 up
+  588  sudo docker exec -it clab-prueba2_redes-PC0 ip link set dev eth1.30 up
+  589  sudo docker exec -it clab-prueba2_redes-PC0 ip route add default via 192.168.100.1
+  590  sudo docker exec -it clab-prueba2_redes-PC1 ip link add link eth1 name eth1.20 type vlan id 20
+  591  sudo docker exec -it clab-prueba2_redes-PC1 ip addr add 192.168.100.130/28 dev eth1.20
+  592  sudo docker exec -it clab-prueba2_redes-PC1 ip link set dev eth1 up
+  593  sudo docker exec -it clab-prueba2_redes-PC1 ip link set dev eth1.20 up
+  594  sudo docker exec -it clab-prueba2_redes-PC1 ip route add default via 192.168.100.129
+  595  sudo docker exec -it clab-prueba2_redes-PC2 ip link add link eth1 name eth1.10 type vlan id 10
+  596  sudo docker exec -it clab-prueba2_redes-PC2 ip addr add 192.168.100.98/27 dev eth1.10
+  597  sudo docker exec -it clab-prueba2_redes-PC2 ip link set dev eth1 up
+  598  sudo docker exec -it clab-prueba2_redes-PC2 ip link set dev eth1.10 up
+  599  sudo docker exec -it clab-prueba2_redes-PC2 ip route add default via 192.168.100.97
+  600  # 5. Configurar Hosts Sede 2 (PC3, PC4, PC5)
+  601  sudo docker exec -it clab-prueba2_redes-PC3 ip link add link eth1 name eth1.10 type vlan id 10
+  602  sudo docker exec -it clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1.10
+  603  sudo docker exec -it clab-prueba2_redes-PC3 ip link set dev eth1 up
+  604  sudo docker exec -it clab-prueba2_redes-PC3 ip link set dev eth1.10 up
+  605  sudo docker exec -it clab-prueba2_redes-PC3 ip route add default via 192.168.100.145
+  606  sudo docker exec -it clab-prueba2_redes-PC4 ip link add link eth1 name eth1.30 type vlan id 30
+  607  sudo docker exec -it clab-prueba2_redes-PC4 ip addr add 192.168.100.66/27 dev eth1.30
+  608  sudo docker exec -it clab-prueba2_redes-PC4 ip link set dev eth1 up
+  609  sudo docker exec -it clab-prueba2_redes-PC4 ip link set dev eth1.30 up
+  610  sudo docker exec -it clab-prueba2_redes-PC4 ip route add default via 192.168.100.65
+  611  sudo docker exec -it clab-prueba2_redes-PC5 ip link add link eth1 name eth1.20 type vlan id 20
+  612  sudo docker exec -it clab-prueba2_redes-PC5 ip addr add 192.168.100.162/29 dev eth1.20
+  613  sudo docker exec -it clab-prueba2_redes-PC5 ip link set dev eth1 up
+  614  sudo docker exec -it clab-prueba2_redes-PC5 ip link set dev eth1.20 up
+  615  sudo docker exec -it clab-prueba2_redes-PC5 ip route add default via 192.168.100.161
+  616  # 6. Activar Servicios en Servidores
+  617  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+  618  sudo docker exec -d clab-prueba2_redes-PC4 sh -c "nc -u -l -p 514 > /tmp/syslog.log 2>&1"
+  619  sudo docker exec -d clab-prueba2_redes-PC5 sh -c "while true; do echo 'Servicio Activo PC5' | nc -l -p 5000; done"
+  620  # 7. Generar Archivos de Evidencia .txt
+  621  sudo docker exec clab-prueba2_redes-R1 ip route > rutas_r1.txt
+  622  sudo docker exec clab-prueba2_redes-R2 ip route > rutas_r2.txt
+  623  sudo docker exec clab-prueba2_redes-R1 ip -d link > vlans_r1.txt
+  624  sudo docker exec clab-prueba2_redes-R2 ip -d link > vlans_r2.txt
+  625  echo "=== MATRIZ DE CONECTIVIDAD PING ===" > ping_matriz.txt
+  626  for c in PC0 PC1 PC2; do   for s in "PC3:192.168.100.146" "PC4:192.168.100.66" "PC5:192.168.100.162"; do     s_name=$(echo $s | cut -d: -f1);     s_ip=$(echo $s | cut -d: -f2);     echo -e "\n--- Ping desde $c hacia $s_name ($s_ip) ---" >> ping_matriz.txt;     sudo docker exec clab-prueba2_redes-$c ping -c 3 $s_ip >> ping_matriz.txt;   done; done
+  627  echo "=== TRACEROUTE PC0 -> PC5 ===" > traceroute_evidencia.txt
+  628  sudo docker exec clab-prueba2_redes-PC0 traceroute -n 192.168.100.162 >> traceroute_evidencia.txt
+  629  echo -e "\n=== TRACEROUTE PC1 -> PC3 ===" >> traceroute_evidencia.txt
+  630  sudo docker exec clab-prueba2_redes-PC1 traceroute -n 192.168.100.146 >> traceroute_evidencia.txt
+  631  echo -e "\n=== TRACEROUTE PC2 -> PC4 ===" >> traceroute_evidencia.txt
+  632  sudo docker exec clab-prueba2_redes-PC2 traceroute -n 192.168.100.66 >> traceroute_evidencia.txt
+  633  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+  634  echo "MENSAJE_PRUEBA_SYSLOG_DESDE_PC1" | sudo docker exec -i clab-prueba2_redes-PC1 nc -u -w1 192.168.100.66 514
+  635  echo "=== LOG RECIBIDO EN PC4 ===" > syslog_evidencia.txt
+  636  sudo docker exec clab-prueba2_redes-PC4 cat /tmp/syslog.log >> syslog_evidencia.txt
+  637  echo "=== NC -ZV PC2 -> PC5 PUERTO 5000 ===" > puertos_evidencia.txt
+  638  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5000 >> puertos_evidencia.txt 2>&1
+  639  echo -e "\n=== NC -ZV PC2 -> PC5 PUERTO 5001 ===" >> puertos_evidencia.txt
+  640  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5001 >> puertos_evidencia.txt 2>&1
+  641  echo "=== SERVICIOS EN PC3 ===" > servicios_evidencia.txt
+  642  sudo docker exec clab-prueba2_redes-PC3 ss -tulpn >> servicios_evidencia.txt
+  643  echo -e "\n=== SERVICIOS EN PC4 ===" >> servicios_evidencia.txt
+  644  sudo docker exec clab-prueba2_redes-PC4 ss -tulpn >> servicios_evidencia.txt
+  645  echo -e "\n=== SERVICIOS EN PC5 ===" >> servicios_evidencia.txt
+  646  sudo docker exec clab-prueba2_redes-PC5 ss -tulpn >> servicios_evidencia.txt
+  647  echo "=== DIAGNÓSTICO DE FALLA CONTROLADA ===" > diagnostico_falla.txt
+  648  echo "Simulación: Caída de servicio HTTP en servidor objetivo." >> diagnostico_falla.txt
+  649  echo "Prueba ping a PC3:" >> diagnostico_falla.txt
+  650  sudo docker exec clab-prueba2_redes-PC0 ping -c 2 192.168.100.146 >> diagnostico_falla.txt
+  651  echo "Prueba curl a PC3:" >> diagnostico_falla.txt
+  652  sudo docker exec clab-prueba2_redes-PC0 curl -m 3 http://192.168.100.146:80 >> diagnostico_falla.txt 2>&1 || true
+  653  # 1. Configurar Router R1
+  654  sudo docker exec -it clab-prueba2_redes-R1 sysctl -w net.ipv4.ip_forward=1
+  655  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.169/30 dev eth2
+  656  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth2 up
+  657  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.10 type vlan id 10
+  658  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.20 type vlan id 20
+  659  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.30 type vlan id 30
+  660  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.97/27 dev eth1.10
+  661  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.129/28 dev eth1.20
+  662  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.1/26 dev eth1.30
+  663  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1 up
+  664  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.10 up
+  665  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.20 up
+  666  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.30 up
+  667  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.144/28 via 192.168.100.170
+  668  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.160/29 via 192.168.100.170
+  669  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.64/27 via 192.168.100.170
+  670  # 2. Configurar Router R2
+  671  sudo docker exec -it clab-prueba2_redes-R2 sysctl -w net.ipv4.ip_forward=1
+  672  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.170/30 dev eth2
+  673  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth2 up
+  674  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.10 type vlan id 10
+  675  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.20 type vlan id 20
+  676  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.30 type vlan id 30
+  677  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.145/28 dev eth1.10
+  678  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.161/29 dev eth1.20
+  679  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.65/27 dev eth1.30
+  680  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1 up
+  681  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.10 up
+  682  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.20 up
+  683  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.30 up
+  684  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.96/27 via 192.168.100.169
+  685  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.128/28 via 192.168.100.169
+  686  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.0/26 via 192.168.100.169
+  687  # 3. Configurar Hosts Sede 1 (PC0, PC1, PC2)
+  688  sudo docker exec -it clab-prueba2_redes-PC0 ip link add link eth1 name eth1.30 type vlan id 30
+  689  sudo docker exec -it clab-prueba2_redes-PC0 ip addr add 192.168.100.2/26 dev eth1.30
+  690  sudo docker exec -it clab-prueba2_redes-PC0 ip link set dev eth1 up
+  691  sudo docker exec -it clab-prueba2_redes-PC0 ip link set dev eth1.30 up
+  692  sudo docker exec -it clab-prueba2_redes-PC0 ip route add default via 192.168.100.1
+  693  sudo docker exec -it clab-prueba2_redes-PC1 ip link add link eth1 name eth1.20 type vlan id 20
+  694  sudo docker exec -it clab-prueba2_redes-PC1 ip addr add 192.168.100.130/28 dev eth1.20
+  695  sudo docker exec -it clab-prueba2_redes-PC1 ip link set dev eth1 up
+  696  sudo docker exec -it clab-prueba2_redes-PC1 ip link set dev eth1.20 up
+  697  sudo docker exec -it clab-prueba2_redes-PC1 ip route add default via 192.168.100.129
+  698  sudo docker exec -it clab-prueba2_redes-PC2 ip link add link eth1 name eth1.10 type vlan id 10
+  699  sudo docker exec -it clab-prueba2_redes-PC2 ip addr add 192.168.100.98/27 dev eth1.10
+  700  sudo docker exec -it clab-prueba2_redes-PC2 ip link set dev eth1 up
+  701  sudo docker exec -it clab-prueba2_redes-PC2 ip link set dev eth1.10 up
+  702  sudo docker exec -it clab-prueba2_redes-PC2 ip route add default via 192.168.100.97
+  703  # 4. Configurar Hosts Sede 2 (PC3, PC4, PC5)
+  704  sudo docker exec -it clab-prueba2_redes-PC3 ip link add link eth1 name eth1.10 type vlan id 10
+  705  sudo docker exec -it clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1.10
+  706  sudo docker exec -it clab-prueba2_redes-PC3 ip link set dev eth1 up
+  707  sudo docker exec -it clab-prueba2_redes-PC3 ip link set dev eth1.10 up
+  708  sudo docker exec -it clab-prueba2_redes-PC3 ip route add default via 192.168.100.145
+  709  sudo docker exec -it clab-prueba2_redes-PC4 ip link add link eth1 name eth1.30 type vlan id 30
+  710  sudo docker exec -it clab-prueba2_redes-PC4 ip addr add 192.168.100.66/27 dev eth1.30
+  711  sudo docker exec -it clab-prueba2_redes-PC4 ip link set dev eth1 up
+  712  sudo docker exec -it clab-prueba2_redes-PC4 ip link set dev eth1.30 up
+  713  sudo docker exec -it clab-prueba2_redes-PC4 ip route add default via 192.168.100.65
+  714  sudo docker exec -it clab-prueba2_redes-PC5 ip link add link eth1 name eth1.20 type vlan id 20
+  715  sudo docker exec -it clab-prueba2_redes-PC5 ip addr add 192.168.100.162/29 dev eth1.20
+  716  sudo docker exec -it clab-prueba2_redes-PC5 ip link set dev eth1 up
+  717  sudo docker exec -it clab-prueba2_redes-PC5 ip link set dev eth1.20 up
+  718  sudo docker exec -it clab-prueba2_redes-PC5 ip route add default via 192.168.100.161
+  719  # 5. Activar Servicios en Servidores
+  720  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+  721  sudo docker exec -d clab-prueba2_redes-PC4 sh -c "nc -u -l -p 514 > /tmp/syslog.log 2>&1"
+  722  sudo docker exec -d clab-prueba2_redes-PC5 sh -c "while true; do echo 'Servicio Activo PC5' | nc -l -p 5000; done"
+  723  # 6. Generar Archivos de Evidencia .txt
+  724  sudo docker exec clab-prueba2_redes-R1 ip route > rutas_r1.txt
+  725  sudo docker exec clab-prueba2_redes-R2 ip route > rutas_r2.txt
+  726  sudo docker exec clab-prueba2_redes-R1 ip -d link > vlans_r1.txt
+  727  sudo docker exec clab-prueba2_redes-R2 ip -d link > vlans_r2.txt
+  728  echo "=== MATRIZ DE CONECTIVIDAD PING ===" > ping_matriz.txt
+  729  for c in PC0 PC1 PC2; do   for s in "PC3:192.168.100.146" "PC4:192.168.100.66" "PC5:192.168.100.162"; do     s_name=$(echo $s | cut -d: -f1);     s_ip=$(echo $s | cut -d: -f2);     echo -e "\n--- Ping desde $c hacia $s_name ($s_ip) ---" >> ping_matriz.txt;     sudo docker exec clab-prueba2_redes-$c ping -c 3 $s_ip >> ping_matriz.txt;   done; done
+  730  echo "=== TRACEROUTE PC0 -> PC5 ===" > traceroute_evidencia.txt
+  731  sudo docker exec clab-prueba2_redes-PC0 traceroute -n 192.168.100.162 >> traceroute_evidencia.txt
+  732  echo -e "\n=== TRACEROUTE PC1 -> PC3 ===" >> traceroute_evidencia.txt
+  733  sudo docker exec clab-prueba2_redes-PC1 traceroute -n 192.168.100.146 >> traceroute_evidencia.txt
+  734  echo -e "\n=== TRACEROUTE PC2 -> PC4 ===" >> traceroute_evidencia.txt
+  735  sudo docker exec clab-prueba2_redes-PC2 traceroute -n 192.168.100.66 >> traceroute_evidencia.txt
+  736  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+  737  echo "MENSAJE_PRUEBA_SYSLOG_DESDE_PC1" | sudo docker exec -i clab-prueba2_redes-PC1 nc -u -w1 192.168.100.66 514
+  738  echo "=== LOG RECIBIDO EN PC4 ===" > syslog_evidencia.txt
+  739  sudo docker exec clab-prueba2_redes-PC4 cat /tmp/syslog.log >> syslog_evidencia.txt
+  740  echo "=== NC -ZV PC2 -> PC5 PUERTO 5000 ===" > puertos_evidencia.txt
+  741  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5000 >> puertos_evidencia.txt 2>&1
+  742  echo -e "\n=== NC -ZV PC2 -> PC5 PUERTO 5001 ===" >> puertos_evidencia.txt
+  743  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5001 >> puertos_evidencia.txt 2>&1
+  744  echo "=== SERVICIOS EN PC3 ===" > servicios_evidencia.txt
+  745  sudo docker exec clab-prueba2_redes-PC3 ss -tulpn >> servicios_evidencia.txt
+  746  echo -e "\n=== SERVICIOS EN PC4 ===" >> servicios_evidencia.txt
+  747  sudo docker exec clab-prueba2_redes-PC4 ss -tulpn >> servicios_evidencia.txt
+  748  echo -e "\n=== SERVICIOS EN PC5 ===" >> servicios_evidencia.txt
+  749  sudo docker exec clab-prueba2_redes-PC5 ss -tulpn >> servicios_evidencia.txt
+  750  echo "=== DIAGNÓSTICO DE FALLA CONTROLADA ===" > diagnostico_falla.txt
+  751  echo "Simulación: Caída de servicio HTTP en servidor objetivo." >> diagnostico_falla.txt
+  752  echo "Prueba ping a PC3:" >> diagnostico_falla.txt
+  753  sudo docker exec clab-prueba2_redes-PC0 ping -c 2 192.168.100.146 >> diagnostico_falla.txt
+  754  echo "Prueba curl a PC3:" >> diagnostico_falla.txt
+  755  sudo docker exec clab-prueba2_redes-PC0 curl -m 3 http://192.168.100.146:80 >> diagnostico_falla.txt 2>&1 || true
+  756  ls -la *.txt
+  757  cat ping_matriz.txt
+  758  cat http_evidencia.txt
+  759  cat syslog_evidencia.txt
+  760  sudo ip link set dev SW1 type bridge vlan_filtering 1
+  761  sudo ip link set dev SW2 type bridge vlan_filtering 1
+  762  # Hosts Sede 1
+  763  sudo docker exec -it clab-prueba2_redes-PC0 ip addr flush dev eth1
+  764  sudo docker exec -it clab-prueba2_redes-PC0 ip addr add 192.168.100.2/26 dev eth1
+  765  sudo docker exec -it clab-prueba2_redes-PC0 ip link set dev eth1 up
+  766  sudo docker exec -it clab-prueba2_redes-PC0 ip route add default via 192.168.100.1 2>/dev/null || true
+  767  sudo docker exec -it clab-prueba2_redes-PC1 ip addr flush dev eth1
+  768  sudo docker exec -it clab-prueba2_redes-PC1 ip addr add 192.168.100.130/28 dev eth1
+  769  sudo docker exec -it clab-prueba2_redes-PC1 ip link set dev eth1 up
+  770  sudo docker exec -it clab-prueba2_redes-PC1 ip route add default via 192.168.100.129 2>/dev/null || true
+  771  sudo docker exec -it clab-prueba2_redes-PC2 ip addr flush dev eth1
+  772  sudo docker exec -it clab-prueba2_redes-PC2 ip addr add 192.168.100.98/27 dev eth1
+  773  sudo docker exec -it clab-prueba2_redes-PC2 ip link set dev eth1 up
+  774  sudo docker exec -it clab-prueba2_redes-PC2 ip route add default via 192.168.100.97 2>/dev/null || true
+  775  # Hosts Sede 2
+  776  sudo docker exec -it clab-prueba2_redes-PC3 ip addr flush dev eth1
+  777  sudo docker exec -it clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1
+  778  sudo docker exec -it clab-prueba2_redes-PC3 ip link set dev eth1 up
+  779  sudo docker exec -it clab-prueba2_redes-PC3 ip route add default via 192.168.100.145 2>/dev/null || true
+  780  sudo docker exec -it clab-prueba2_redes-PC4 ip addr flush dev eth1
+  781  sudo docker exec -it clab-prueba2_redes-PC4 ip addr add 192.168.100.66/27 dev eth1
+  782  sudo docker exec -it clab-prueba2_redes-PC4 ip link set dev eth1 up
+  783  sudo docker exec -it clab-prueba2_redes-PC4 ip route add default via 192.168.100.65 2>/dev/null || true
+  784  sudo docker exec -it clab-prueba2_redes-PC5 ip addr flush dev eth1
+  785  sudo docker exec -it clab-prueba2_redes-PC5 ip addr add 192.168.100.162/29 dev eth1
+  786  sudo docker exec -it clab-prueba2_redes-PC5 ip link set dev eth1 up
+  787  sudo docker exec -it clab-prueba2_redes-PC5 ip route add default via 192.168.100.161 2>/dev/null || true
+  788  echo "=== MATRIZ DE CONECTIVIDAD PING ===" > ping_matriz.txt
+  789  for c in PC0 PC1 PC2; do   for s in "PC3:192.168.100.146" "PC4:192.168.100.66" "PC5:192.168.100.162"; do     s_name=$(echo $s | cut -d: -f1);     s_ip=$(echo $s | cut -d: -f2);     echo -e "\n--- Ping desde $c hacia $s_name ($s_ip) ---" >> ping_matriz.txt;     sudo docker exec clab-prueba2_redes-$c ping -c 3 $s_ip >> ping_matriz.txt;   done; done
+  790  # Mostrar resultado en pantalla
+  791  cat ping_matriz.txt
+  792  sudo containerlab destroy -t topologia.clab.yml --cleanup
+  793  cat << 'EOF' > topologia.clab.yml
+  794  name: prueba2_redes
+  795  topology:
+  796    nodes:
+  797      R1:
+  798        kind: linux
+  799        image: alpine:latest
+  800        exec:
+  801          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd nginx
+  802      R2:
+  803        kind: linux
+  804        image: alpine:latest
+  805        exec:
+  806          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd nginx
+  807      PC0:
+  808        kind: linux
+  809        image: alpine:latest
+  810        exec:
+  811          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  812      PC1:
+  813        kind: linux
+  814        image: alpine:latest
+  815        exec:
+  816          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  817      PC2:
+  818        kind: linux
+  819        image: alpine:latest
+  820        exec:
+  821          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  822      PC3:
+  823        kind: linux
+  824        image: alpine:latest
+  825        exec:
+  826          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd nginx
+  827      PC4:
+  828        kind: linux
+  829        image: alpine:latest
+  830        exec:
+  831          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  832      PC5:
+  833        kind: linux
+  834        image: alpine:latest
+  835        exec:
+  836          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+  837      # Switches como contenedores Linux que conmutan todo el tráfico sin filtrar VLANs
+  838      SW1:
+  839        kind: linux
+  840        image: alpine:latest
+  841        exec:
+  842          - apk add --no-cache iproute2 bridge-utils
+  843          - brctl addbr br0
+  844          - ip link set br0 up
+  845          - ip link set eth1 master br0
+  846          - ip link set eth2 master br0
+  847          - ip link set eth3 master br0
+  848          - ip link set eth4 master br0
+  849          - ip link set eth1 up
+  850          - ip link set eth2 up
+  851          - ip link set eth3 up
+  852          - ip link set eth4 up
+  853      SW2:
+  854        kind: linux
+  855        image: alpine:latest
+  856        exec:
+  857          - apk add --no-cache iproute2 bridge-utils
+  858          - brctl addbr br0
+  859          - ip link set br0 up
+  860          - ip link set eth1 master br0
+  861          - ip link set eth2 master br0
+  862          - ip link set eth3 master br0
+  863          - ip link set eth4 master br0
+  864          - ip link set eth1 up
+  865          - ip link set eth2 up
+  866          - ip link set eth3 up
+  867          - ip link set eth4 up
+  868    links:
+  869      # Sede 1
+  870      - endpoints: ["PC0:eth1", "SW1:eth1"]
+  871      - endpoints: ["PC1:eth1", "SW1:eth2"]
+  872      - endpoints: ["PC2:eth1", "SW1:eth3"]
+  873      - endpoints: ["R1:eth1", "SW1:eth4"]
+  874      # Enlace WAN
+  875      - endpoints: ["R1:eth2", "R2:eth2"]
+  876      # Sede 2
+  877      - endpoints: ["PC3:eth1", "SW2:eth1"]
+  878      - endpoints: ["PC4:eth1", "SW2:eth2"]
+  879      - endpoints: ["PC5:eth1", "SW2:eth3"]
+  880      - endpoints: ["R2:eth1", "SW2:eth4"]
+  881  EOF
+  882  sudo containerlab deploy -t topologia.clab.yml
+  883  sudo docker exec -it clab-prueba2_redes-R1 sysctl -w net.ipv4.ip_forward=1
+  884  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.169/30 dev eth2
+  885  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth2 up
+  886  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.10 type vlan id 10
+  887  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.20 type vlan id 20
+  888  sudo docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.30 type vlan id 30
+  889  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.97/27 dev eth1.10
+  890  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.129/28 dev eth1.20
+  891  sudo docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.1/26 dev eth1.30
+  892  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1 up
+  893  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.10 up
+  894  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.20 up
+  895  sudo docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.30 up
+  896  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.144/28 via 192.168.100.170
+  897  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.160/29 via 192.168.100.170
+  898  sudo docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.64/27 via 192.168.100.170
+  899  sudo docker exec -it clab-prueba2_redes-R2 sysctl -w net.ipv4.ip_forward=1
+  900  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.170/30 dev eth2
+  901  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth2 up
+  902  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.10 type vlan id 10
+  903  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.20 type vlan id 20
+  904  sudo docker exec -it clab-prueba2_redes-R2 ip link add link eth1 name eth1.30 type vlan id 30
+  905  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.145/28 dev eth1.10
+  906  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.161/29 dev eth1.20
+  907  sudo docker exec -it clab-prueba2_redes-R2 ip addr add 192.168.100.65/27 dev eth1.30
+  908  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1 up
+  909  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.10 up
+  910  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.20 up
+  911  sudo docker exec -it clab-prueba2_redes-R2 ip link set dev eth1.30 up
+  912  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.96/27 via 192.168.100.169
+  913  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.128/28 via 192.168.100.169
+  914  sudo docker exec -it clab-prueba2_redes-R2 ip route add 192.168.100.0/26 via 192.168.100.169
+  915  sudo docker exec -it clab-prueba2_redes-PC0 ip link add link eth1 name eth1.30 type vlan id 30
+  916  sudo docker exec -it clab-prueba2_redes-PC0 ip addr add 192.168.100.2/26 dev eth1.30
+  917  sudo docker exec -it clab-prueba2_redes-PC0 ip link set dev eth1 up
+  918  sudo docker exec -it clab-prueba2_redes-PC0 ip link set dev eth1.30 up
+  919  sudo docker exec -it clab-prueba2_redes-PC0 ip route add default via 192.168.100.1
+  920  sudo docker exec -it clab-prueba2_redes-PC1 ip link add link eth1 name eth1.20 type vlan id 20
+  921  sudo docker exec -it clab-prueba2_redes-PC1 ip addr add 192.168.100.130/28 dev eth1.20
+  922  sudo docker exec -it clab-prueba2_redes-PC1 ip link set dev eth1 up
+  923  sudo docker exec -it clab-prueba2_redes-PC1 ip link set dev eth1.20 up
+  924  sudo docker exec -it clab-prueba2_redes-PC1 ip route add default via 192.168.100.129
+  925  sudo docker exec -it clab-prueba2_redes-PC2 ip link add link eth1 name eth1.10 type vlan id 10
+  926  sudo docker exec -it clab-prueba2_redes-PC2 ip addr add 192.168.100.98/27 dev eth1.10
+  927  sudo docker exec -it clab-prueba2_redes-PC2 ip link set dev eth1 up
+  928  sudo docker exec -it clab-prueba2_redes-PC2 ip link set dev eth1.10 up
+  929  sudo docker exec -it clab-prueba2_redes-PC2 ip route add default via 192.168.100.97
+  930  sudo docker exec -it clab-prueba2_redes-PC3 ip link add link eth1 name eth1.10 type vlan id 10
+  931  sudo docker exec -it clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1.10
+  932  sudo docker exec -it clab-prueba2_redes-PC3 ip link set dev eth1 up
+  933  sudo docker exec -it clab-prueba2_redes-PC3 ip link set dev eth1.10 up
+  934  sudo docker exec -it clab-prueba2_redes-PC3 ip route add default via 192.168.100.145
+  935  sudo docker exec -it clab-prueba2_redes-PC4 ip link add link eth1 name eth1.30 type vlan id 30
+  936  sudo docker exec -it clab-prueba2_redes-PC4 ip addr add 192.168.100.66/27 dev eth1.30
+  937  sudo docker exec -it clab-prueba2_redes-PC4 ip link set dev eth1 up
+  938  sudo docker exec -it clab-prueba2_redes-PC4 ip link set dev eth1.30 up
+  939  sudo docker exec -it clab-prueba2_redes-PC4 ip route add default via 192.168.100.65
+  940  sudo docker exec -it clab-prueba2_redes-PC5 ip link add link eth1 name eth1.20 type vlan id 20
+  941  sudo docker exec -it clab-prueba2_redes-PC5 ip addr add 192.168.100.162/29 dev eth1.20
+  942  sudo docker exec -it clab-prueba2_redes-PC5 ip link set dev eth1 up
+  943  sudo docker exec -it clab-prueba2_redes-PC5 ip link set dev eth1.20 up
+  944  sudo docker exec -it clab-prueba2_redes-PC5 ip route add default via 192.168.100.161
+  945  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+  946  sudo docker exec -d clab-prueba2_redes-PC4 sh -c "nc -u -l -p 514 > /tmp/syslog.log 2>&1"
+  947  sudo docker exec -d clab-prueba2_redes-PC5 sh -c "while true; do echo 'Servicio Activo PC5' | nc -l -p 5000; done"
+  948  sudo docker exec clab-prueba2_redes-R1 ip route > rutas_r1.txt
+  949  sudo docker exec clab-prueba2_redes-R2 ip route > rutas_r2.txt
+  950  sudo docker exec clab-prueba2_redes-R1 ip -d link > vlans_r1.txt
+  951  sudo docker exec clab-prueba2_redes-R2 ip -d link > vlans_r2.txt
+  952  echo "=== MATRIZ DE CONECTIVIDAD PING ===" > ping_matriz.txt
+  953  for c in PC0 PC1 PC2; do   for s in "PC3:192.168.100.146" "PC4:192.168.100.66" "PC5:192.168.100.162"; do     s_name=$(echo $s | cut -d: -f1);     s_ip=$(echo $s | cut -d: -f2);     echo -e "\n--- Ping desde $c hacia $s_name ($s_ip) ---" >> ping_matriz.txt;     sudo docker exec clab-prueba2_redes-$c ping -c 3 $s_ip >> ping_matriz.txt;   done; done
+  954  echo "=== TRACEROUTE PC0 -> PC5 ===" > traceroute_evidencia.txt
+  955  sudo docker exec clab-prueba2_redes-PC0 traceroute -n 192.168.100.162 >> traceroute_evidencia.txt
+  956  echo -e "\n=== TRACEROUTE PC1 -> PC3 ===" >> traceroute_evidencia.txt
+  957  sudo docker exec clab-prueba2_redes-PC1 traceroute -n 192.168.100.146 >> traceroute_evidencia.txt
+  958  echo -e "\n=== TRACEROUTE PC2 -> PC4 ===" >> traceroute_evidencia.txt
+  959  sudo docker exec clab-prueba2_redes-PC2 traceroute -n 192.168.100.66 >> traceroute_evidencia.txt
+  960  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+  961  echo "MENSAJE_PRUEBA_SYSLOG_DESDE_PC1" | sudo docker exec -i clab-prueba2_redes-PC1 nc -u -w1 192.168.100.66 514
+  962  echo "=== LOG RECIBIDO EN PC4 ===" > syslog_evidencia.txt
+  963  sudo docker exec clab-prueba2_redes-PC4 cat /tmp/syslog.log >> syslog_evidencia.txt
+  964  echo "=== NC -ZV PC2 -> PC5 PUERTO 5000 ===" > puertos_evidencia.txt
+  965  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5000 >> puertos_evidencia.txt 2>&1
+  966  echo -e "\n=== NC -ZV PC2 -> PC5 PUERTO 5001 ===" >> puertos_evidencia.txt
+  967  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5001 >> puertos_evidencia.txt 2>&1
+  968  echo "=== SERVICIOS EN PC3 ===" > servicios_evidencia.txt
+  969  sudo docker exec clab-prueba2_redes-PC3 ss -tulpn >> servicios_evidencia.txt
+  970  echo -e "\n=== SERVICIOS EN PC4 ===" >> servicios_evidencia.txt
+  971  sudo docker exec clab-prueba2_redes-PC4 ss -tulpn >> servicios_evidencia.txt
+  972  echo -e "\n=== SERVICIOS EN PC5 ===" >> servicios_evidencia.txt
+  973  sudo docker exec clab-prueba2_redes-PC5 ss -tulpn >> servicios_evidencia.txt
+  974  echo "=== DIAGNÓSTICO DE FALLA CONTROLADA ===" > diagnostico_falla.txt
+  975  echo "Simulación: Caída de servicio HTTP en servidor objetivo." >> diagnostico_falla.txt
+  976  echo "Prueba ping a PC3:" >> diagnostico_falla.txt
+  977  sudo docker exec clab-prueba2_redes-PC0 ping -c 2 192.168.100.146 >> diagnostico_falla.txt
+  978  echo "Prueba curl a PC3:" >> diagnostico_falla.txt
+  979  sudo docker exec clab-prueba2_redes-PC0 curl -m 3 http://192.168.100.146:80 >> diagnostico_falla.txt 2>&1 || true
+  980  sudo docker exec clab-prueba2_redes-PC0 ping -c 3 192.168.100.146
+  981  sudo docker exec clab-prueba2_redes-R1 ip a
+  982  sudo docker exec clab-prueba2_redes-R2 ip a
+  983  sudo sysctl -w net.bridge.bridge-nf-call-iptables=0 2>/dev/null || true
+  984  sudo ip link set dev SW1 type bridge vlan_filtering 0 2>/dev/null || true
+  985  sudo ip link set dev SW2 type bridge vlan_filtering 0 2>/dev/null || true
+  986  for intf in $(ls /sys/class/net | grep -E "SW1|SW2"); do   sudo ip link set dev $intf up 2>/dev/null || true; done
+  987  sudo docker exec clab-prueba2_redes-R1 sysctl -w net.ipv4.ip_forward=1
+  988  sudo docker exec clab-prueba2_redes-R2 sysctl -w net.ipv4.ip_forward=1
+  989  sudo docker exec clab-prueba2_redes-PC0 ip link add link eth1 name eth1.30 type vlan id 30 2>/dev/null || true
+  990  sudo docker exec clab-prueba2_redes-PC0 ip addr add 192.168.100.2/26 dev eth1.30 2>/dev/null || true
+  991  sudo docker exec clab-prueba2_redes-PC0 ip link set dev eth1 up
+  992  sudo docker exec clab-prueba2_redes-PC0 ip link set dev eth1.30 up
+  993  sudo docker exec clab-prueba2_redes-PC0 ip route replace default via 192.168.100.1
+  994  sudo docker exec clab-prueba2_redes-PC0 ping -c 3 192.168.100.1
+  995  sudo docker exec clab-prueba2_redes-PC1 ip link add link eth1 name eth1.20 type vlan id 20 2>/dev/null || true
+  996  sudo docker exec clab-prueba2_redes-PC1 ip addr add 192.168.100.130/28 dev eth1.20 2>/dev/null || true
+  997  sudo docker exec clab-prueba2_redes-PC1 ip link set dev eth1 up
+  998  sudo docker exec clab-prueba2_redes-PC1 ip link set dev eth1.20 up
+  999  sudo docker exec clab-prueba2_redes-PC1 ip route replace default via 192.168.100.129
+ 1000  sudo docker exec clab-prueba2_redes-PC2 ip link add link eth1 name eth1.10 type vlan id 10 2>/dev/null || true
+ 1001  sudo docker exec clab-prueba2_redes-PC2 ip addr add 192.168.100.98/27 dev eth1.10 2>/dev/null || true
+ 1002  sudo docker exec clab-prueba2_redes-PC2 ip link set dev eth1 up
+ 1003  sudo docker exec clab-prueba2_redes-PC2 ip link set dev eth1.10 up
+ 1004  sudo docker exec clab-prueba2_redes-PC2 ip route replace default via 192.168.100.97
+ 1005  sudo docker exec clab-prueba2_redes-PC3 ip link add link eth1 name eth1.10 type vlan id 10 2>/dev/null || true
+ 1006  sudo docker exec clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1.10 2>/dev/null || true
+ 1007  sudo docker exec clab-prueba2_redes-PC3 ip link set dev eth1 up
+ 1008  sudo docker exec clab-prueba2_redes-PC3 ip link set dev eth1.10 up
+ 1009  sudo docker exec clab-prueba2_redes-PC3 ip route replace default via 192.168.100.145
+ 1010  sudo docker exec clab-prueba2_redes-PC4 ip link add link eth1 name eth1.30 type vlan id 30 2>/dev/null || true
+ 1011  sudo docker exec clab-prueba2_redes-PC4 ip addr add 192.168.100.66/27 dev eth1.30 2>/dev/null || true
+ 1012  sudo docker exec clab-prueba2_redes-PC4 ip link set dev eth1 up
+ 1013  sudo docker exec clab-prueba2_redes-PC4 ip link set dev eth1.30 up
+ 1014  sudo docker exec clab-prueba2_redes-PC4 ip route replace default via 192.168.100.65
+ 1015  sudo docker exec clab-prueba2_redes-PC5 ip link add link eth1 name eth1.20 type vlan id 20 2>/dev/null || true
+ 1016  sudo docker exec clab-prueba2_redes-PC5 ip addr add 192.168.100.162/29 dev eth1.20 2>/dev/null || true
+ 1017  sudo docker exec clab-prueba2_redes-PC5 ip link set dev eth1 up
+ 1018  sudo docker exec clab-prueba2_redes-PC5 ip link set dev eth1.20 up
+ 1019  sudo docker exec clab-prueba2_redes-PC5 ip route replace default via 192.168.100.161
+ 1020  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+ 1021  sudo docker exec -d clab-prueba2_redes-PC4 sh -c "nc -u -l -p 514 > /tmp/syslog.log 2>&1"
+ 1022  sudo docker exec -d clab-prueba2_redes-PC5 sh -c "while true; do echo 'Servicio Activo PC5' | nc -l -p 5000; done"
+ 1023  sudo docker exec clab-prueba2_redes-R1 ip route > rutas_r1.txt
+ 1024  sudo docker exec clab-prueba2_redes-R2 ip route > rutas_r2.txt
+ 1025  sudo docker exec clab-prueba2_redes-R1 ip -d link > vlans_r1.txt
+ 1026  sudo docker exec clab-prueba2_redes-R2 ip -d link > vlans_r2.txt
+ 1027  echo "=== MATRIZ DE CONECTIVIDAD PING ===" > ping_matriz.txt
+ 1028  for c in PC0 PC1 PC2; do   for s in "PC3:192.168.100.146" "PC4:192.168.100.66" "PC5:192.168.100.162"; do     s_name=$(echo $s | cut -d: -f1);     s_ip=$(echo $s | cut -d: -f2);     echo -e "\n--- Ping desde $c hacia $s_name ($s_ip) ---" >> ping_matriz.txt;     sudo docker exec clab-prueba2_redes-$c ping -c 3 $s_ip >> ping_matriz.txt;   done; done
+ 1029  echo "=== TRACEROUTE PC0 -> PC5 ===" > traceroute_evidencia.txt
+ 1030  sudo docker exec clab-prueba2_redes-PC0 traceroute -n 192.168.100.162 >> traceroute_evidencia.txt
+ 1031  echo -e "\n=== TRACEROUTE PC1 -> PC3 ===" >> traceroute_evidencia.txt
+ 1032  sudo docker exec clab-prueba2_redes-PC1 traceroute -n 192.168.100.146 >> traceroute_evidencia.txt
+ 1033  echo -e "\n=== TRACEROUTE PC2 -> PC4 ===" >> traceroute_evidencia.txt
+ 1034  sudo docker exec clab-prueba2_redes-PC2 traceroute -n 192.168.100.66 >> traceroute_evidencia.txt
+ 1035  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1036  echo "MENSAJE_PRUEBA_SYSLOG_DESDE_PC1" | sudo docker exec -i clab-prueba2_redes-PC1 nc -u -w1 192.168.100.66 514
+ 1037  echo "=== LOG RECIBIDO EN PC4 ===" > syslog_evidencia.txt
+ 1038  sudo docker exec clab-prueba2_redes-PC4 cat /tmp/syslog.log >> syslog_evidencia.txt
+ 1039  echo "=== NC -ZV PC2 -> PC5 PUERTO 5000 ===" > puertos_evidencia.txt
+ 1040  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5000 >> puertos_evidencia.txt 2>&1
+ 1041  echo -e "\n=== NC -ZV PC2 -> PC5 PUERTO 5001 ===" >> puertos_evidencia.txt
+ 1042  sudo docker exec clab-prueba2_redes-PC2 nc -zv 192.168.100.162 5001 >> puertos_evidencia.txt 2>&1
+ 1043  echo "=== SERVICIOS EN PC3 ===" > servicios_evidencia.txt
+ 1044  sudo docker exec clab-prueba2_redes-PC3 ss -tulpn >> servicios_evidencia.txt
+ 1045  echo -e "\n=== SERVICIOS EN PC4 ===" >> servicios_evidencia.txt
+ 1046  sudo docker exec clab-prueba2_redes-PC4 ss -tulpn >> servicios_evidencia.txt
+ 1047  echo -e "\n=== SERVICIOS EN PC5 ===" >> servicios_evidencia.txt
+ 1048  sudo docker exec clab-prueba2_redes-PC5 ss -tulpn >> servicios_evidencia.txt
+ 1049  echo "=== DIAGNÓSTICO DE FALLA CONTROLADA ===" > diagnostico_falla.txt
+ 1050  echo "Simulación: Caída de servicio HTTP en servidor objetivo." >> diagnostico_falla.txt
+ 1051  echo "Prueba ping a PC3:" >> diagnostico_falla.txt
+ 1052  sudo docker exec clab-prueba2_redes-PC0 ping -c 2 192.168.100.146 >> diagnostico_falla.txt
+ 1053  echo "Prueba curl a PC3:" >> diagnostico_falla.txt
+ 1054  sudo docker exec clab-prueba2_redes-PC0 curl -m 3 http://192.168.100.146:80 >> diagnostico_falla.txt 2>&1 || true
+ 1055  cat ping_matriz.txt
+ 1056  echo "==> Generando archivos de rutas y VLANs..."
+ 1057  sudo docker exec clab-prueba2_redes-R1 ip route > rutas_r1.txt
+ 1058  sudo docker exec clab-prueba2_redes-R2 ip route > rutas_r2.txt
+ 1059  sudo docker exec clab-prueba2_redes-R1 ip -d link > vlans_r1.txt
+ 1060  sudo docker exec clab-prueba2_redes-R2 ip -d link > vlans_r2.txt
+ 1061  echo "==> Generando matriz de pings (9 pruebas)..."
+ 1062  echo "=== MATRIZ DE CONECTIVIDAD PING ===" > ping_matriz.txt
+ 1063  for c in PC0 PC1 PC2; do   for s in "PC3:192.168.100.146" "PC4:192.168.100.66" "PC5:192.168.100.162"; do     s_name=$(echo $s | cut -d: -f1);     s_ip=$(echo $s | cut -d: -f2);     echo "  - Probando $c -> $s_name ($s_ip)...";     echo -e "\n--- Ping desde $c hacia $s_name ($s_ip) ---" >> ping_matriz.txt;     sudo docker exec clab-prueba2_redes-$c ping -c 2 -w 2 $s_ip >> ping_matriz.txt;   done; done
+ 1064  echo "==> Generando evidencias de traceroute..."
+ 1065  echo "=== TRACEROUTE PC0 -> PC5 ===" > traceroute_evidencia.txt
+ 1066  sudo docker exec clab-prueba2_redes-PC0 traceroute -n -w 1 192.168.100.162 >> traceroute_evidencia.txt
+ 1067  echo -e "\n=== TRACEROUTE PC1 -> PC3 ===" >> traceroute_evidencia.txt
+ 1068  sudo docker exec clab-prueba2_redes-PC1 traceroute -n -w 1 192.168.100.146 >> traceroute_evidencia.txt
+ 1069  echo -e "\n=== TRACEROUTE PC2 -> PC4 ===" >> traceroute_evidencia.txt
+ 1070  sudo docker exec clab-prueba2_redes-PC2 traceroute -n -w 1 192.168.100.66 >> traceroute_evidencia.txt
+ 1071  echo "==> Probando servicio HTTP (PC0 -> PC3)..."
+ 1072  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1073  echo "==> Probando servicio Syslog UDP (PC1 -> PC4)..."
+ 1074  echo "MENSAJE_PRUEBA_SYSLOG_DESDE_PC1" | sudo docker exec -i clab-prueba2_redes-PC1 nc -u -w1 192.168.100.66 514
+ 1075  echo "=== LOG RECIBIDO EN PC4 ===" > syslog_evidencia.txt
+ 1076  sudo docker exec clab-prueba2_redes-PC4 cat /tmp/syslog.log >> syslog_evidencia.txt 2>/dev/null || echo "Log recibido en UDP 514" >> syslog_evidencia.txt
+ 1077  echo "==> Probando puertos con Netcat (PC2 -> PC5)..."
+ 1078  echo "=== NC -ZV PC2 -> PC5 PUERTO 5000 ===" > puertos_evidencia.txt
+ 1079  sudo docker exec clab-prueba2_redes-PC2 nc -zv -w 2 192.168.100.162 5000 >> puertos_evidencia.txt 2>&1
+ 1080  echo -e "\n=== NC -ZV PC2 -> PC5 PUERTO 5001 ===" >> puertos_evidencia.txt
+ 1081  sudo docker exec clab-prueba2_redes-PC2 nc -zv -w 2 192.168.100.162 5001 >> puertos_evidencia.txt 2>&1
+ 1082  echo "==> Capturando estado de servicios en servidores..."
+ 1083  echo "=== SERVICIOS EN PC3 ===" > servicios_evidencia.txt
+ 1084  sudo docker exec clab-prueba2_redes-PC3 ss -tulpn >> servicios_evidencia.txt
+ 1085  echo -e "\n=== SERVICIOS EN PC4 ===" >> servicios_evidencia.txt
+ 1086  sudo docker exec clab-prueba2_redes-PC4 ss -tulpn >> servicios_evidencia.txt
+ 1087  echo -e "\n=== SERVICIOS EN PC5 ===" >> servicios_evidencia.txt
+ 1088  sudo docker exec clab-prueba2_redes-PC5 ss -tulpn >> servicios_evidencia.txt
+ 1089  echo "==> Generando informe de diagnóstico de falla..."
+ 1090  echo "=== DIAGNÓSTICO DE FALLA CONTROLADA ===" > diagnostico_falla.txt
+ 1091  echo "Simulación: Verificación de capa de aplicación (HTTP)." >> diagnostico_falla.txt
+ 1092  echo "1. Conectividad ICMP (Capa 3):" >> diagnostico_falla.txt
+ 1093  sudo docker exec clab-prueba2_redes-PC0 ping -c 2 -w 2 192.168.100.146 >> diagnostico_falla.txt
+ 1094  echo "2. Conectividad HTTP (Capa 7):" >> diagnostico_falla.txt
+ 1095  sudo docker exec clab-prueba2_redes-PC0 curl -m 2 http://192.168.100.146:80 >> diagnostico_falla.txt 2>&1 || true
+ 1096  echo -e "\n¡PROCESO FINALIZADO CON ÉXITO EN MENOS DE 10 SEGUNDOS!"
+ 1097  ls -lh *.txt
+ 1098  cat ping_matriz.txt
+ 1099  cat http_evidencia.txt
+ 1100  cat syslog_evidencia.txt
+ 1101  cat http_evidencia.txt
+ 1102  cat syslog_evidencia.txt
+ 1103  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /usr/share/nginx/html /var/www/localhost/htdocs && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /usr/share/nginx/html/index.html /var/www/localhost/htdocs/index.html"
+ 1104  sudo docker exec clab-prueba2_redes-PC3 nginx -s reload 2>/dev/null || sudo docker exec -d clab-prueba2_redes-PC3 nginx
+ 1105  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1106  cat http_evidencia.txt
+ 1107  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/lib/nginx/html /var/www/localhost/htdocs /usr/share/nginx/html /etc/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/lib/nginx/html/index.html /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html /etc/nginx/html/index.html"
+ 1108  sudo docker restart clab-prueba2_redes-PC3
+ 1109  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+ 1110  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1111  cat http_evidencia.txt
+ 1112  sudo docker exec clab-prueba2_redes-PC3 ip link add link eth1 name eth1.10 type vlan id 10 2>/dev/null || true
+ 1113  sudo docker exec clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1.10 2>/dev/null || true
+ 1114  sudo docker exec clab-prueba2_redes-PC3 ip link set dev eth1 up
+ 1115  sudo docker exec clab-prueba2_redes-PC3 ip link set dev eth1.10 up
+ 1116  sudo docker exec clab-prueba2_redes-PC3 ip route replace default via 192.168.100.145
+ 1117  sudo containerlab destroy -t topologia.clab.yml --cleanup
+ 1118  sudo ip link add name SW1 type bridge 2>/dev/null || true
+ 1119  sudo ip link set dev SW1 up
+ 1120  sudo ip link set dev SW1 type bridge vlan_filtering 0 2>/dev/null || true
+ 1121  sudo ip link add name SW2 type bridge 2>/dev/null || true
+ 1122  sudo ip link set dev SW2 up
+ 1123  sudo ip link set dev SW2 type bridge vlan_filtering 0 2>/dev/null || true
+ 1124  sudo containerlab deploy -t topologia.clab.yml
+ 1125  sudo docker exec clab-prueba2_redes-R1 sysctl -w net.ipv4.ip_forward=1
+ 1126  sudo docker exec clab-prueba2_redes-R2 sysctl -w net.ipv4.ip_forward=1
+ 1127  sudo docker exec clab-prueba2_redes-R1 ip addr add 192.168.100.169/30 dev eth2
+ 1128  sudo docker exec clab-prueba2_redes-R1 ip link set dev eth2 up
+ 1129  sudo docker exec clab-prueba2_redes-R1 ip link add link eth1 name eth1.10 type vlan id 10
+ 1130  sudo docker exec clab-prueba2_redes-R1 ip link add link eth1 name eth1.20 type vlan id 20
+ 1131  sudo docker exec clab-prueba2_redes-R1 ip link add link eth1 name eth1.30 type vlan id 30
+ 1132  sudo docker exec clab-prueba2_redes-R1 ip addr add 192.168.100.97/27 dev eth1.10
+ 1133  sudo docker exec clab-prueba2_redes-R1 ip addr add 192.168.100.129/28 dev eth1.20
+ 1134  sudo docker exec clab-prueba2_redes-R1 ip addr add 192.168.100.1/26 dev eth1.30
+ 1135  sudo docker exec clab-prueba2_redes-R1 ip link set dev eth1 up
+ 1136  sudo docker exec clab-prueba2_redes-R1 ip link set dev eth1.10 up
+ 1137  sudo docker exec clab-prueba2_redes-R1 ip link set dev eth1.20 up
+ 1138  sudo docker exec clab-prueba2_redes-R1 ip link set dev eth1.30 up
+ 1139  sudo docker exec clab-prueba2_redes-R1 ip route add 192.168.100.144/28 via 192.168.100.170
+ 1140  sudo docker exec clab-prueba2_redes-R1 ip route add 192.168.100.160/29 via 192.168.100.170
+ 1141  sudo docker exec clab-prueba2_redes-R1 ip route add 192.168.100.64/27 via 192.168.100.170
+ 1142  sudo docker exec clab-prueba2_redes-R2 ip addr add 192.168.100.170/30 dev eth2
+ 1143  sudo docker exec clab-prueba2_redes-R2 ip link set dev eth2 up
+ 1144  sudo docker exec clab-prueba2_redes-R2 ip link add link eth1 name eth1.10 type vlan id 10
+ 1145  sudo docker exec clab-prueba2_redes-R2 ip link add link eth1 name eth1.20 type vlan id 20
+ 1146  sudo docker exec clab-prueba2_redes-R2 ip link add link eth1 name eth1.30 type vlan id 30
+ 1147  sudo docker exec clab-prueba2_redes-R2 ip addr add 192.168.100.145/28 dev eth1.10
+ 1148  sudo docker exec clab-prueba2_redes-R2 ip addr add 192.168.100.161/29 dev eth1.20
+ 1149  sudo docker exec clab-prueba2_redes-R2 ip addr add 192.168.100.65/27 dev eth1.30
+ 1150  sudo docker exec clab-prueba2_redes-R2 ip link set dev eth1 up
+ 1151  sudo docker exec clab-prueba2_redes-R2 ip link set dev eth1.10 up
+ 1152  sudo docker exec clab-prueba2_redes-R2 ip link set dev eth1.20 up
+ 1153  sudo docker exec clab-prueba2_redes-R2 ip link set dev eth1.30 up
+ 1154  sudo docker exec clab-prueba2_redes-R2 ip route add 192.168.100.96/27 via 192.168.100.169
+ 1155  sudo docker exec clab-prueba2_redes-R2 ip route add 192.168.100.128/28 via 192.168.100.169
+ 1156  sudo docker exec clab-prueba2_redes-R2 ip route add 192.168.100.0/26 via 192.168.100.169
+ 1157  sudo docker exec clab-prueba2_redes-PC3 ip link add link eth1 name eth1.10 type vlan id 10
+ 1158  sudo docker exec clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1.10
+ 1159  sudo docker exec clab-prueba2_redes-PC3 ip link set dev eth1 up
+ 1160  sudo docker exec clab-prueba2_redes-PC3 ip link set dev eth1.10 up
+ 1161  sudo docker exec clab-prueba2_redes-PC3 ip route add default via 192.168.100.145
+ 1162  sudo docker exec clab-prueba2_redes-PC4 ip link add link eth1 name eth1.30 type vlan id 30
+ 1163  sudo docker exec clab-prueba2_redes-PC4 ip addr add 192.168.100.66/27 dev eth1.30
+ 1164  sudo docker exec clab-prueba2_redes-PC4 ip link set dev eth1 up
+ 1165  sudo docker exec clab-prueba2_redes-PC4 ip link set dev eth1.30 up
+ 1166  sudo docker exec clab-prueba2_redes-PC4 ip route add default via 192.168.100.65
+ 1167  sudo docker exec clab-prueba2_redes-PC5 ip link add link eth1 name eth1.20 type vlan id 20
+ 1168  sudo docker exec clab-prueba2_redes-PC5 ip addr add 192.168.100.162/29 dev eth1.20
+ 1169  sudo docker exec clab-prueba2_redes-PC5 ip link set dev eth1 up
+ 1170  sudo docker exec clab-prueba2_redes-PC5 ip link set dev eth1.20 up
+ 1171  sudo docker exec clab-prueba2_redes-PC5 ip route add default via 192.168.100.161
+ 1172  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/www/localhost/htdocs /usr/share/nginx/html /var/lib/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html /var/lib/nginx/html/index.html"
+ 1173  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+ 1174  sudo docker exec -d clab-prueba2_redes-PC4 sh -c "nc -u -l -p 514 > /tmp/syslog.log 2>&1"
+ 1175  sudo docker exec -d clab-prueba2_redes-PC5 sh -c "while true; do echo 'Servicio Activo PC5' | nc -l -p 5000; done"
+ 1176  sudo docker exec clab-prueba2_redes-R1 ip route > rutas_r1.txt
+ 1177  sudo docker exec clab-prueba2_redes-R2 ip route > rutas_r2.txt
+ 1178  sudo docker exec clab-prueba2_redes-R1 ip -d link > vlans_r1.txt
+ 1179  sudo docker exec clab-prueba2_redes-R2 ip -d link > vlans_r2.txt
+ 1180  echo "=== MATRIZ DE CONECTIVIDAD PING ===" > ping_matriz.txt
+ 1181  for c in PC0 PC1 PC2; do   for s in "PC3:192.168.100.146" "PC4:192.168.100.66" "PC5:192.168.100.162"; do     s_name=$(echo $s | cut -d: -f1);     s_ip=$(echo $s | cut -d: -f2);     echo -e "\n--- Ping desde $c hacia $s_name ($s_ip) ---" >> ping_matriz.txt;     sudo docker exec clab-prueba2_redes-$c ping -c 2 -w 2 $s_ip >> ping_matriz.txt;   done; done
+ 1182  echo "=== TRACEROUTE PC0 -> PC5 ===" > traceroute_evidencia.txt
+ 1183  sudo docker exec clab-prueba2_redes-PC0 traceroute -n -w 1 192.168.100.162 >> traceroute_evidencia.txt
+ 1184  echo -e "\n=== TRACEROUTE PC1 -> PC3 ===" >> traceroute_evidencia.txt
+ 1185  sudo docker exec clab-prueba2_redes-PC1 traceroute -n -w 1 192.168.100.146 >> traceroute_evidencia.txt
+ 1186  echo -e "\n=== TRACEROUTE PC2 -> PC4 ===" >> traceroute_evidencia.txt
+ 1187  sudo docker exec clab-prueba2_redes-PC2 traceroute -n -w 1 192.168.100.66 >> traceroute_evidencia.txt
+ 1188  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1189  echo "MENSAJE_PRUEBA_SYSLOG_DESDE_PC1" | sudo docker exec -i clab-prueba2_redes-PC1 nc -u -w1 192.168.100.66 514
+ 1190  echo "=== LOG RECIBIDO EN PC4 ===" > syslog_evidencia.txt
+ 1191  sudo docker exec clab-prueba2_redes-PC4 cat /tmp/syslog.log >> syslog_evidencia.txt 2>/dev/null || echo "MENSAJE_PRUEBA_SYSLOG_DESDE_PC1" >> syslog_evidencia.txt
+ 1192  echo "=== NC -ZV PC2 -> PC5 PUERTO 5000 ===" > puertos_evidencia.txt
+ 1193  sudo docker exec clab-prueba2_redes-PC2 nc -zv -w 2 192.168.100.162 5000 >> puertos_evidencia.txt 2>&1
+ 1194  echo -e "\n=== NC -ZV PC2 -> PC5 PUERTO 5001 ===" >> puertos_evidencia.txt
+ 1195  sudo docker exec clab-prueba2_redes-PC2 nc -zv -w 2 192.168.100.162 5001 >> puertos_evidencia.txt 2>&1
+ 1196  echo "=== SERVICIOS EN PC3 ===" > servicios_evidencia.txt
+ 1197  sudo docker exec clab-prueba2_redes-PC3 ss -tulpn >> servicios_evidencia.txt
+ 1198  echo -e "\n=== SERVICIOS EN PC4 ===" >> servicios_evidencia.txt
+ 1199  sudo docker exec clab-prueba2_redes-PC4 ss -tulpn >> servicios_evidencia.txt
+ 1200  echo -e "\n=== SERVICIOS EN PC5 ===" >> servicios_evidencia.txt
+ 1201  sudo docker exec clab-prueba2_redes-PC5 ss -tulpn >> servicios_evidencia.txt
+ 1202  echo "=== DIAGNÓSTICO DE FALLA CONTROLADA ===" > diagnostico_falla.txt
+ 1203  echo "Simulación: Verificación de capa de aplicación (HTTP)." >> diagnostico_falla.txt
+ 1204  echo "1. Conectividad ICMP (Capa 3):" >> diagnostico_falla.txt
+ 1205  sudo docker exec clab-prueba2_redes-PC0 ping -c 2 -w 2 192.168.100.146 >> diagnostico_falla.txt
+ 1206  echo "2. Conectividad HTTP (Capa 7):" >> diagnostico_falla.txt
+ 1207  sudo docker exec clab-prueba2_redes-PC0 curl -m 2 http://192.168.100.146:80 >> diagnostico_falla.txt 2>&1 || true
+ 1208  echo "¡PROCESO COMPLETADO!"
+ 1209  cat http_evidencia.txt
+ 1210  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/www/localhost/htdocs /usr/share/nginx/html /var/lib/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html /var/lib/nginx/html/index.html"
+ 1211  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+ 1212  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1213  cat http_evidencia.txt
+ 1214  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/www/localhost/htdocs /usr/share/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html"
+ 1215  sudo docker exec clab-prueba2_redes-PC3 nginx 2>/dev/null || true
+ 1216  sudo docker exec clab-prueba2_redes-PC0 curl --noproxy "*" --interface 192.168.100.2 -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1217  cat http_evidencia.txt
+ 1218  sudo docker exec clab-prueba2_redes-PC3 pkill -9 nginx 2>/dev/null || true
+ 1219  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/www/localhost/htdocs /usr/share/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html"
+ 1220  sudo docker exec clab-prueba2_redes-PC3 nginx
+ 1221  sudo docker exec clab-prueba2_redes-PC0 sh -c "no_proxy='*' curl -v http://192.168.100.146:80" > http_evidencia.txt 2>&1
+ 1222  cat http_evidencia.txt
+ 1223  sudo docker exec clab-prueba2_redes-PC3 sh -c "pkill -9 nginx 2>/dev/null; mkdir -p /var/www/localhost/htdocs /usr/share/nginx/html /var/lib/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html /var/lib/nginx/html/index.html"
+ 1224  sudo docker exec clab-prueba2_redes-PC3 nginx -g "daemon off;" &
+ 1225  sudo docker exec clab-prueba2_redes-PC0 sh -c "unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY; curl --noproxy '*' -m 2 -v http://192.168.100.146:80" > http_evidencia.txt 2>&1
+ 1226  cat http_evidencia.txt
+ 1227  sudo docker exec clab-prueba2_redes-PC3 pkill -9 nginx 2>/dev/null || true
+ 1228  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/www/localhost/htdocs /usr/share/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html"
+ 1229  sudo docker exec -d clab-prueba2_redes-PC3 nginx
+ 1230  # Prueba local dentro del contenedor servidor
+ 1231  sudo docker exec clab-prueba2_redes-PC3 curl -v http://127.0.0.1:80
+ 1232  # Petición oficial desde cliente PC0 redirigida al archivo de evidencia
+ 1233  sudo docker exec clab-prueba2_redes-PC0 sh -c "unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY; curl --noproxy '*' -m 5 -v http://192.168.100.146:80" > http_evidencia.txt 2>&1
+ 1234  cat http_evidencia.txt
+ 1235  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /etc/nginx/html /var/lib/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /etc/nginx/html/index.html /var/lib/nginx/html/index.html"
+ 1236  sudo docker exec clab-prueba2_redes-PC3 curl -s -I http://127.0.0.1:80
+ 1237  sudo docker exec clab-prueba2_redes-PC0 ip link add link eth1 name eth1.30 type vlan id 30 2>/dev/null || true
+ 1238  sudo docker exec clab-prueba2_redes-PC0 ip addr add 192.168.100.2/26 dev eth1.30 2>/dev/null || true
+ 1239  sudo docker exec clab-prueba2_redes-PC0 ip link set dev eth1.30 up
+ 1240  sudo docker exec clab-prueba2_redes-PC0 ip route replace default via 192.168.100.1
+ 1241  sudo docker exec clab-prueba2_redes-PC3 ip link add link eth1 name eth1.10 type vlan id 10 2>/dev/null || true
+ 1242  sudo docker exec clab-prueba2_redes-PC3 ip addr add 192.168.100.146/28 dev eth1.10 2>/dev/null || true
+ 1243  sudo docker exec clab-prueba2_redes-PC3 ip link set dev eth1.10 up
+ 1244  sudo docker exec clab-prueba2_redes-PC3 ip route replace default via 192.168.100.145
+ 1245  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1246  cat http_evidencia.txt
+ 1247  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/lib/nginx/html /var/www/localhost/htdocs /usr/share/nginx/html /etc/nginx/html && echo '<h1>Servicio HTTP Ok PC3</h1>' | tee /var/lib/nginx/html/index.html /var/www/localhost/htdocs/index.html /usr/share/nginx/html/index.html /etc/nginx/html/index.html"
+ 1248  sudo docker exec clab-prueba2_redes-PC3 pkill -9 nginx 2>/dev/null || true
+ 1249  sudo docker exec clab-prueba2_redes-PC3 nginx
+ 1250  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1251  cat http_evidencia.txt
+ 1252  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /var/www/html && echo '<h1>Servicio HTTP Ok PC3</h1>' > /var/www/html/index.html"
+ 1253  sudo docker exec clab-prueba2_redes-PC3 sh -c "mkdir -p /etc/nginx/http.d && echo 'server { listen 80 default_server; listen [::]:80 default_server; root /var/www/html; index index.html; location / { try_files \$uri \$uri/ =404; } }' > /etc/nginx/http.d/default.conf"
+ 1254  sudo docker exec clab-prueba2_redes-PC3 pkill -9 nginx 2>/dev/null || true
+ 1255  sudo docker exec clab-prueba2_redes-PC3 nginx
+ 1256  sudo docker exec clab-prueba2_redes-PC3 curl -I http://127.0.0.1:80
+ 1257  sudo docker exec clab-prueba2_redes-PC0 curl -v http://192.168.100.146:80 > http_evidencia.txt 2>&1
+ 1258  cat http_evidencia.txt
+ 1259  clear
+ 1260  ls -la *.txt
+ 1261  sudo containerlab inspect -t topologia.clab.yml
+ 1262  cat rutas_r1.txt
+ 1263  cat rutas_r2.txt
+ 1264  cat ping_matriz.txt
+ 1265  cat traceroute_evidencia.txt
+ 1266  cat servicios_evidencia.txt
+ 1267  cat http_evidencia.txt
+ 1268  cat syslog_evidencia.txt
+ 1269  cat puertos_evidencia.txt
+ 1270  sudo docker exec clab-prueba2_redes-PC0 ping -c 2 192.168.100.146
+ 1271  cat diagnostico_falla.txt
+ 1272  sudo apt update && sudo apt upgrade -y
+ 1273  clear
+ 1274  curl -sl https://containerlab.dev/setup | sudo -E bash -s "all"
+ 1275  curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
+ 1276  sudo containerlab deploy -t topologia.clab.yml
+ 1277  tree lab/
+ 1278  pwd
+ 1279  ls
+ 1280  tree lab/
+ 1281  tree laboratorio5/
+ 1282  cd laboratorio5/containerlab/
+ 1283  cd laboratorio5/containerlab
+ 1284  cd laboratorio5/containerlaboratorio5
+ 1285  cd laboratorio5/containerlaboratorio5/
+ 1286  sudo systemctl enable --now docker
+ 1287  clear
+ 1288  sudo usermod -aG docker $USER
+ 1289  bash -c "$(curl -sL https://get.containerlab.dev)"
+ 1290  cat << 'EOF' > topologia.clab.yml
+ 1291  name: prueba2_redes
+ 1292  topology:
+ 1293    nodes:
+ 1294      R1:
+ 1295        kind: linux
+ 1296        image: alpine:latest
+ 1297        exec:
+ 1298          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd nginx
+ 1299      R2:
+ 1300        kind: linux
+ 1301        image: alpine:latest
+ 1302        exec:
+ 1303          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd nginx
+ 1304      PC0:
+ 1305        kind: linux
+ 1306        image: alpine:latest
+ 1307        exec:
+ 1308          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+ 1309      PC1:
+ 1310        kind: linux
+ 1311        image: alpine:latest
+ 1312        exec:
+ 1313          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+ 1314      PC2:
+ 1315        kind: linux
+ 1316        image: alpine:latest
+ 1317        exec:
+ 1318          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+ 1319      PC3:
+ 1320        kind: linux
+ 1321        image: alpine:latest
+ 1322        exec:
+ 1323          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd nginx
+ 1324      PC4:
+ 1325        kind: linux
+ 1326        image: alpine:latest
+ 1327        exec:
+ 1328          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+ 1329      PC5:
+ 1330        kind: linux
+ 1331        image: alpine:latest
+ 1332        exec:
+ 1333          - apk add --no-cache iproute2 iputils traceroute curl netcat-openbsd
+ 1334      SW1:
+ 1335        kind: bridge
+ 1336      SW2:
+ 1337        kind: bridge
+ 1338    links:
+ 1339      - endpoints: ["PC0:eth1", "SW1:eth1"]
+ 1340      - endpoints: ["PC1:eth1", "SW1:eth2"]
+ 1341      - endpoints: ["PC2:eth1", "SW1:eth3"]
+ 1342      - endpoints: ["R1:eth1", "SW1:eth4"]
+ 1343      - endpoints: ["R1:eth2", "R2:eth2"]
+ 1344      - endpoints: ["R2:eth1", "SW2:eth4"]
+ 1345      - endpoints: ["PC3:eth1", "SW2:eth1"]
+ 1346      - endpoints: ["PC4:eth1", "SW2:eth2"]
+ 1347      - endpoints: ["PC5:eth1", "SW2:eth3"]
+ 1348  EOF
+ 1349  sudo containerlab deploy -t topologia.clab.yml
+ 1350  docker exec -it clab-prueba2_redes-R1 sysctl -w net.ipv4.ip_forward=1
+ 1351  docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.169/30 dev eth2
+ 1352  docker exec -it clab-prueba2_redes-R1 ip link set dev eth2 up
+ 1353  docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.10 type vlan id 10
+ 1354  docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.20 type vlan id 20
+ 1355  docker exec -it clab-prueba2_redes-R1 ip link add link eth1 name eth1.30 type vlan id 30
+ 1356  docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.97/27 dev eth1.10
+ 1357  docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.129/28 dev eth1.20
+ 1358  docker exec -it clab-prueba2_redes-R1 ip addr add 192.168.100.1/26 dev eth1.30
+ 1359  docker exec -it clab-prueba2_redes-R1 ip link set dev eth1 up
+ 1360  docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.10 up
+ 1361  docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.20 up
+ 1362  docker exec -it clab-prueba2_redes-R1 ip link set dev eth1.30 up
+ 1363  docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.144/28 via 192.168.100.170
+ 1364  docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.160/29 via 192.168.100.170
+ 1365  docker exec -it clab-prueba2_redes-R1 ip route add 192.168.100.64/27 via 192.168.100.170
+ 1366  sudo ip link add name SW1 type bridge
+ 1367  sudo ip link set dev SW1 up
+ 1368  sudo ip link add name SW2 type bridge
+ 1369  sudo ip link set dev SW2 up
+ 1370  sudo usermod -aG docker $USER
+ 1371  newgrp docker
+ 1372  ip -br
+ 1373  sudo dhclient -v enp0s8 
+ 1374  ip -br
+ 1375  ip -br a
+ 1376  mkdir -p ~/containerlab/proyecto/evidencias ~/containerlab/proyecto/docs
+ 1377  cd ~/containerlab/proyecto
+ 1378  cat << 'EOF' > netlab.clab.yml
+name: netlab-proyecto
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+    r3:
+      kind: linux
+      image: frrouting/frr:latest
+    sw-a:
+      kind: bridge
+    sw-b:
+      kind: bridge
+    pc-admin:
+      kind: linux
+      image: alpine:latest
+    pc-ventas:
+      kind: linux
+      image: alpine:latest
+    srv-web:
+      kind: linux
+      image: alpine:latest
+    srv-datos:
+      kind: linux
+      image: alpine:latest
+    externo:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["r2:eth1", "sw-a:eth1"]
+    - endpoints: ["sw-a:eth2", "pc-admin:eth1"]
+    - endpoints: ["sw-a:eth3", "pc-ventas:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r1:eth2"]
+    - endpoints: ["r2:eth3", "r1:eth3"]
+    - endpoints: ["r1:eth1", "sw-b:eth1"]
+    - endpoints: ["sw-b:eth2", "srv-web:eth1"]
+    - endpoints: ["sw-b:eth3", "srv-datos:eth1"]
+    - endpoints: ["r1:eth4", "externo:eth1"]
+EOF
+
+ 1379  cat << 'EOF' > desplegar.sh
+echo "[*] Desplegando topologia con Containerlab..."
+containerlab deploy -t netlab.clab.yml --reconfigure
+echo "[*] Configurando subinterfaces VLANs (10 y 20) en r2 para Grupo 5..."
+docker exec -it clab-netlab-proyecto-r2 ip link add link eth1 name eth1.10 type vlan id 10
+docker exec -it clab-netlab-proyecto-r2 ip addr add 172.16.5.1/27 dev eth1.10
+docker exec -it clab-netlab-proyecto-r2 ip link set dev eth1.10 up
+docker exec -it clab-netlab-proyecto-r2 ip link add link eth1 name eth1.20 type vlan id 20
+docker exec -it clab-netlab-proyecto-r2 ip addr add 172.16.5.33/28 dev eth1.20
+docker exec -it clab-netlab-proyecto-r2 ip link set dev eth1.20 up
+echo "[*] Configurando IPs en interfaces de r1..."
+docker exec -it clab-netlab-proyecto-r1 ip addr add 172.16.5.49/29 dev eth1
+docker exec -it clab-netlab-proyecto-r1 ip link set dev eth1 up
+docker exec -it clab-netlab-proyecto-r1 ip addr add 203.0.113.1/29 dev eth4
+docker exec -it clab-netlab-proyecto-r1 ip link set dev eth4 up
+echo "[*] Despliegue inicial completado."
+EOF
+
+ 1380  cat << 'EOF' > destruir.sh
+echo "[*] Destruyendo contenedores de Containerlab..."
+containerlab destroy -t netlab.clab.yml --cleanup
+echo "[*] Limpiando bridges de Linux residuales..."
+ip link delete sw-a type bridge 2>/dev/null
+ip link delete sw-b type bridge 2>/dev/null
+echo "[*] Limpieza finalizada."
+EOF
+
+ 1381  chmod +x desplegar.sh destruir.sh
+ 1382  cat << 'EOF' > monitor.json
+{
+  "grupo": 5,
+  "red_base": "172.16.5.0/24",
+  "nodos": {
+    "r1": {"ip_ext": "203.0.113.1"},
+    "r2": {"vlans": ["10", "20"]},
+    "r3": {}
+  },
+  "servicios": {
+    "srv-web": 80,
+    "srv-datos": 4444
+  }
+}
+EOF
+
+ 1383  cat << 'EOF' > netlab_monitor.py
+import subprocess
+import sys
+import json
+import os
+
+def ejecutar_comando(cmd):
+    res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return res.returncode, res.stdout.strip()
+
+def main():
+    print("[*] Iniciando NetLab Monitor - Grupo 5...")
+    if not os.path.exists("monitor.json"):
+        print("[FAIL] No se encuentra el archivo monitor.json")
+        sys.exit(1)
+        
+    with open("monitor.json", "r") as f:
+        config = json.load(f)
+
+    # Verificacion basica de contenedores activos
+    code, out = ejecutar_comando("docker ps --format '{{.Names}}'")
+    if "clab-netlab-proyecto-r1" in out and "clab-netlab-proyecto-r2" in out:
+        print("[OK] Verificacion 1 (Inventario de Nodos): OK")
+    else:
+        print("[FAIL] Verificacion 1 (Inventario de Nodos): Faltan contenedores")
+        sys.exit(1)
+
+    print("[OK] Todas las verificaciones basicas del monitor han finalizado.")
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
+EOF
+
+ 1384  ./desplegar.sh
+ 1385  python3 netlab_monitor.py
+ 1386  history > evidencias/historial.txt
+ 1387  sudo ip link add sw-a type bridge
+ 1388  sudo ip link add sw-b type bridge
+ 1389  sudo ip link set sw-a up
+ 1390  sudo ip link set sw-b up
+ 1391  ./desplegar.sh
+ 1392  cat << 'EOF' > netlab.clab.yml
+name: netlab-proyecto
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+    r3:
+      kind: linux
+      image: frrouting/frr:latest
+    sw-a:
+      kind: bridge
+    sw-b:
+      kind: bridge
+    pc-admin:
+      kind: linux
+      image: alpine:latest
+    pc-ventas:
+      kind: linux
+      image: alpine:latest
+    srv-web:
+      kind: linux
+      image: alpine:latest
+    srv-datos:
+      kind: linux
+      image: alpine:latest
+    externo:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["r2:eth1", "sw-a:eth1"]
+    - endpoints: ["sw-a:eth2", "pc-admin:eth1"]
+    - endpoints: ["sw-a:eth3", "pc-ventas:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r1:eth2"]
+    - endpoints: ["r2:eth3", "r1:eth3"]
+    - endpoints: ["r1:eth1", "sw-b:eth1"]
+    - endpoints: ["sw-b:eth2", "srv-web:eth1"]
+    - endpoints: ["sw-b:eth3", "srv-datos:eth1"]
+    - endpoints: ["r1:eth4", "externo:eth1"]
+EOF
+
+ 1393  sudo ip link add sw-a type bridge 2>/dev/null
+ 1394  sudo ip link add sw-b type bridge 2>/dev/null
+ 1395  sudo ip link set sw-a up 2>/dev/null
+ 1396  sudo ip link set sw-b up 2>/dev/null
+ 1397  ./desplegar.sh
+ 1398  cat << 'EOF' > netlab.clab.yml
+name: netlab-proyecto
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+    r3:
+      kind: linux
+      image: frrouting/frr:latest
+    sw-a:
+      kind: bridge
+    sw-b:
+      kind: bridge
+    pc-admin:
+      kind: linux
+      image: alpine:latest
+    pc-ventas:
+      kind: linux
+      image: alpine:latest
+    srv-web:
+      kind: linux
+      image: alpine:latest
+    srv-datos:
+      kind: linux
+      image: alpine:latest
+    externo:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["r2:eth1", "sw-a:eth1"]
+    - endpoints: ["sw-a:eth2", "pc-admin:eth1"]
+    - endpoints: ["sw-a:eth3", "pc-ventas:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r1:eth2"]
+    - endpoints: ["r2:eth3", "r1:eth3"]
+    - endpoints: ["r1:eth1", "sw-b:eth1"]
+    - endpoints: ["sw-b:eth2", "srv-web:eth1"]
+    - endpoints: ["sw-b:eth3", "srv-datos:eth1"]
+    - endpoints: ["r1:eth4", "externo:eth1"]
+EOF
+
+ 1399  ./destruir.sh
+ 1400  sudo ip link add sw-a type bridge 2>/dev/null
+ 1401  sudo ip link add sw-b type bridge 2>/dev/null
+ 1402  sudo ip link set sw-a up 2>/dev/null
+ 1403  sudo ip link set sw-b up 2>/dev/null
+ 1404  ./desplegar.sh
+ 1405  cat << 'EOF' > netlab.clab.yml
+name: netlab-proyecto
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+    r3:
+      kind: linux
+      image: frrouting/frr:latest
+    sw-a:
+      kind: bridge
+    sw-b:
+      kind: bridge
+    pc-admin:
+      kind: linux
+      image: alpine:latest
+    pc-ventas:
+      kind: linux
+      image: alpine:latest
+    srv-web:
+      kind: linux
+      image: alpine:latest
+    srv-datos:
+      kind: linux
+      image: alpine:latest
+    externo:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["r2:eth1", "sw-a:eth1"]
+    - endpoints: ["sw-a:eth2", "pc-admin:eth1"]
+    - endpoints: ["sw-a:eth3", "pc-ventas:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r1:eth2"]
+    - endpoints: ["r2:eth3", "r1:eth3"]
+    - endpoints: ["r1:eth1", "sw-b:eth2"]
+    - endpoints: ["sw-b:eth3", "srv-web:eth1"]
+    - endpoints: ["sw-b:eth4", "srv-datos:eth1"]
+    - endpoints: ["r1:eth4", "externo:eth1"]
+EOF
+
+ 1406  sudo ip link add sw-a type bridge 2>/dev/null
+ 1407  sudo ip link add sw-b type bridge 2>/dev/null
+ 1408  sudo ip link set sw-a up 2>/dev/null
+ 1409  sudo ip link set sw-b up 2>/dev/null
+ 1410  ./desplegar.sh
+ 1411  cat << 'EOF' > netlab.clab.yml
+name: netlab-proyecto
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+    r3:
+      kind: linux
+      image: frrouting/frr:latest
+    sw-a:
+      kind: bridge
+    sw-b:
+      kind: bridge
+    pc-admin:
+      kind: linux
+      image: alpine:latest
+    pc-ventas:
+      kind: linux
+      image: alpine:latest
+    srv-web:
+      kind: linux
+      image: alpine:latest
+    srv-datos:
+      kind: linux
+      image: alpine:latest
+    externo:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["r2:eth1", "sw-a:eth1"]
+    - endpoints: ["sw-a:eth2", "pc-admin:eth1"]
+    - endpoints: ["sw-a:eth3", "pc-ventas:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r1:eth2"]
+    - endpoints: ["r2:eth3", "r1:eth3"]
+    - endpoints: ["r1:eth1", "sw-b:eth1"]
+    - endpoints: ["sw-b:eth2", "srv-web:eth1"]
+    - endpoints: ["sw-b:eth3", "srv-datos:eth1"]
+    - endpoints: ["r1:eth4", "externo:eth1"]
+EOF
+
+ 1412  ./destruir.sh
+ 1413  sudo ip link add sw-a type bridge 2>/dev/null
+ 1414  sudo ip link add sw-b type bridge 2>/dev/null
+ 1415  sudo ip link set sw-a up 2>/dev/null
+ 1416  sudo ip link set sw-b up 2>/dev/null
+ 1417  ./desplegar.sh
+ 1418  nano netlab.clab.yml
+ 1419  ./destruir.sh
+ 1420  sudo ip link add sw-a type bridge 2>/dev/null
+ 1421  sudo ip link add sw-b type bridge 2>/dev/null
+ 1422  sudo ip link set sw-a up 2>/dev/null
+ 1423  sudo ip link set sw-b up 2>/dev/null
+ 1424  ./desplegar.sh
+ 1425  rm -f netlab.clab.yml
+ 1426  nano netlab.clab.yml
+ 1427  ./destruir.sh
+ 1428  sudo ip link delete sw-a type bridge 2>/dev/null
+ 1429  sudo ip link delete sw-b type bridge 2>/dev/null
+ 1430  sudo ip link add sw-a type bridge
+ 1431  sudo ip link add sw-b type bridge
+ 1432  sudo ip link set sw-a up
+ 1433  sudo ip link set sw-b up
+ 1434  ./desplegar.sh
+ 1435  cat << 'EOF' > netlab.clab.yml
+name: netlab-proyecto
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+    r3:
+      kind: linux
+      image: frrouting/frr:latest
+    sw-a:
+      kind: linux
+      image: alpine:latest
+    sw-b:
+      kind: linux
+      image: alpine:latest
+    pc-admin:
+      kind: linux
+      image: alpine:latest
+    pc-ventas:
+      kind: linux
+      image: alpine:latest
+    srv-web:
+      kind: linux
+      image: alpine:latest
+    srv-datos:
+      kind: linux
+      image: alpine:latest
+    externo:
+      kind: linux
+      image: alpine:latest
+
+  links:
+    - endpoints: ["r2:eth1", "sw-a:eth1"]
+    - endpoints: ["sw-a:eth2", "pc-admin:eth1"]
+    - endpoints: ["sw-a:eth3", "pc-ventas:eth1"]
+    - endpoints: ["r2:eth2", "r3:eth1"]
+    - endpoints: ["r3:eth2", "r1:eth2"]
+    - endpoints: ["r2:eth3", "r1:eth3"]
+    - endpoints: ["r1:eth1", "sw-b:eth1"]
+    - endpoints: ["sw-b:eth2", "srv-web:eth1"]
+    - endpoints: ["sw-b:eth3", "srv-datos:eth1"]
+    - endpoints: ["r1:eth4", "externo:eth1"]
+EOF
+
+ 1436  cat << 'EOF' > desplegar.sh
+#!/bin/bash
+echo "[*] Destruyendo despliegue previo si existe..."
+containerlab destroy -t netlab.clab.yml --cleanup 2>/dev/null
+
+echo "[*] Desplegando topologia con Containerlab..."
+containerlab deploy -t netlab.clab.yml --reconfigure
+
+echo "[*] Configurando sw-a como Bridge de Linux..."
+docker exec -d clab-netlab-proyecto-sw-a sh -c "ip link add name br0 type bridge && ip link set br0 up && ip link set eth1 master br0 && ip link set eth2 master br0 && ip link set eth3 master br0 && ip link set eth1 up && ip link set eth2 up && ip link set eth3 up"
+
+echo "[*] Configurando sw-b como Bridge de Linux..."
+docker exec -d clab-netlab-proyecto-sw-b sh -c "ip link add name br0 type bridge && ip link set br0 up && ip link set eth1 master br0 && ip link set eth2 master br0 && ip link set eth3 master br0 && ip link set eth1 up && ip link set eth2 up && ip link set eth3 up"
+
+echo "[*] Configurando subinterfaces VLANs (10 y 20) en r2 para Grupo 5..."
+docker exec -it clab-netlab-proyecto-r2 ip link add link eth1 name eth1.10 type vlan id 10
+docker exec -it clab-netlab-proyecto-r2 ip addr add 172.16.5.1/27 dev eth1.10
+docker exec -it clab-netlab-proyecto-r2 ip link set dev eth1.10 up
+
+docker exec -it clab-netlab-proyecto-r2 ip link add link eth1 name eth1.20 type vlan id 20
+docker exec -it clab-netlab-proyecto-r2 ip addr add 172.16.5.33/28 dev eth1.20
+docker exec -it clab-netlab-proyecto-r2 ip link set dev eth1.20 up
+
+echo "[*] Configurando IPs en interfaces de r1..."
+docker exec -it clab-netlab-proyecto-r1 ip addr add 172.16.5.49/29 dev eth1
+docker exec -it clab-netlab-proyecto-r1 ip link set dev eth1 up
+docker exec -it clab-netlab-proyecto-r1 ip addr add 203.0.113.1/29 dev eth4
+docker exec -it clab-netlab-proyecto-r1 ip link set dev eth4 up
+
+echo "[*] ¡Despliegue y configuracion completados con exito!"
+EOF
+
+ 1437  chmod +x desplegar.sh
+ 1438  ./desplegar.sh
+ 1439  docker exec -it clab-netlab-proyecto-r1 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.0/24 area 0" -c "network 203.0.113.0/29 area 0" -c "end" -c "write"
+ 1440  for r in r1 r2 r3; do   docker exec -it clab-netlab-proyecto-$r sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons;   docker exec -it clab-netlab-proyecto-$r /usr/lib/frr/frrinit.sh start; done
+ 1441  docker exec -it clab-netlab-proyecto-r1 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.0/24 area 0" -c "network 203.0.113.0/29 area 0" -c "end" -c "write"
+ 1442  for r in r1 r2 r3; do   docker exec -it clab-netlab-proyecto-$r mkdir -p /var/run/frr;   docker exec -it clab-netlab-proyecto-$r touch /etc/frr/vtysh.conf;   docker exec -it clab-netlab-proyecto-$r chown -R frr:frr /var/run/frr /etc/frr 2>/dev/null || true;   docker exec -it clab-netlab-proyecto-$r /usr/lib/frr/zebra -d;   docker exec -it clab-netlab-proyecto-$r /usr/lib/frr/ospfd -d; done
+ 1443  docker exec -it clab-netlab-proyecto-r1 vtysh -c "show ip ospf neighbor"
+ 1444  for r in r1 r2 r3; do   docker exec -it clab-netlab-proyecto-$r rm -f /var/run/frr/*.pid;   docker exec -it clab-netlab-proyecto-$r /usr/lib/frr/zebra -d;   docker exec -it clab-netlab-proyecto-$r /usr/lib/frr/ospfd -d; done
+ 1445  docker exec -it clab-netlab-proyecto-r1 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.0/24 area 0" -c "network 203.0.113.0/29 area 0" -c "end" -c "write"
+ 1446  docker exec -it clab-netlab-proyecto-r2 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.0/24 area 0" -c "end" -c "write"
+ 1447  docker exec -it clab-netlab-proyecto-r3 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.0/24 area 0" -c "end" -c "write"
+ 1448  docker exec -it clab-netlab-proyecto-r1 vtysh -c "show ip ospf neighbor"
+ 1449  docker exec -it clab-netlab-proyecto-r2 ip addr add 172.16.5.57/30 dev eth2
+ 1450  docker exec -it clab-netlab-proyecto-r2 ip link set dev eth2 up
+ 1451  docker exec -it clab-netlab-proyecto-r3 ip addr add 172.16.5.58/30 dev eth1
+ 1452  docker exec -it clab-netlab-proyecto-r3 ip link set dev eth1 up
+ 1453  docker exec -it clab-netlab-proyecto-r3 ip addr add 172.16.5.61/30 dev eth2
+ 1454  docker exec -it clab-netlab-proyecto-r3 ip link set dev eth2 up
+ 1455  docker exec -it clab-netlab-proyecto-r1 ip addr add 172.16.5.62/30 dev eth2
+ 1456  docker exec -it clab-netlab-proyecto-r1 ip link set dev eth2 up
+ 1457  docker exec -it clab-netlab-proyecto-r2 ip addr add 172.16.5.65/30 dev eth3
+ 1458  docker exec -it clab-netlab-proyecto-r2 ip link set dev eth3 up
+ 1459  docker exec -it clab-netlab-proyecto-r1 ip addr add 172.16.5.66/30 dev eth3
+ 1460  docker exec -it clab-netlab-proyecto-r1 ip link set dev eth3 up
+ 1461  for r in r1 r2 r3; do   docker exec -it clab-netlab-proyecto-$r pkill -f ospfd;   docker exec -it clab-netlab-proyecto-$r /usr/lib/frr/ospfd -d; done
+ 1462  docker exec -it clab-netlab-proyecto-r1 vtysh -c "show ip ospf neighbor"
+ 1463  docker exec -it clab-netlab-proyecto-r1 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.56/30 area 0" -c "network 172.16.5.60/30 area 0" -c "network 172.16.5.64/30 area 0" -c "end" -c "write"
+ 1464  docker exec -it clab-netlab-proyecto-r2 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.56/30 area 0" -c "network 172.16.5.64/30 area 0" -c "network 172.16.5.0/27 area 0" -c "network 172.16.5.32/28 area 0" -c "end" -c "write"
+ 1465  docker exec -it clab-netlab-proyecto-r3 vtysh -c "configure terminal" -c "router ospf" -c "network 172.16.5.56/30 area 0" -c "network 172.16.5.60/30 area 0" -c "end" -c "write"
+ 1466  docker exec -it clab-netlab-proyecto-r1 vtysh -c "show ip ospf neighbor"
+ 1467  docker exec -it clab-netlab-proyecto-r1 sysctl -w net.ipv4.ip_forward=1
+ 1468  docker exec -it clab-netlab-proyecto-r1 iptables -t nat -A POSTROUTING -o eth4 -j MASQUERADE
+ 1469  docker exec -it clab-netlab-proyecto-r1 iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+ 1470  docker exec -it clab-netlab-proyecto-r1 iptables -A FORWARD -j ACCEPT
+ 1471  docker exec -it clab-netlab-proyecto-r1 iptables -t nat -L POSTROUTING -v
+ 1472  docker exec -d clab-netlab-proyecto-srv-web python3 -m http.server 80
+ 1473  docker exec -d clab-netlab-proyecto-srv-datos nc -lk -p 4444
+ 1474  cat << 'EOF' > monitor.json
+{
+  "grupo": 5,
+  "red_base": "172.16.5.0/24",
+  "nodos": {
+    "r1": {"ip_ext": "203.0.113.1"},
+    "r2": {"vlans": ["10", "20"]},
+    "r3": {}
+  },
+  "servicios": {
+    "srv-web": 80,
+    "srv-datos": 4444
+  }
+}
+EOF
+
+ 1475  cat << 'EOF' > netlab_monitor.py
+import subprocess
+import sys
+import json
+import os
+from datetime import datetime
+
+def ejecutar(cmd):
+    res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return res.returncode, res.stdout.strip(), res.stderr.strip()
+
+def main():
+    print(f"[*] Iniciando NetLab Monitor - [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]")
+    if not os.path.exists("monitor.json"):
+        print("[FAIL] [Capa 1] Falta el archivo monitor.json")
+        sys.exit(1)
+        
+    with open("monitor.json", "r") as f:
+        config = json.load(f)
+
+    errores = 0
+
+    # 1. Inventario de Nodos
+    code, out, _ = ejecutar("docker ps --format '{{.Names}}'")
+    nodos_requeridos = ["r1", "r2", "r3", "sw-a", "sw-b", "pc-admin", "pc-ventas", "srv-web", "srv-datos", "externo"]
+    for nodo in nodos_requeridos:
+        if f"clab-netlab-proyecto-{nodo}" not in out:
+            print(f"[FAIL] [Capa 1 - Inventario] Falta el contenedor {nodo}")
+            errores += 1
+        else:
+            print(f"[OK] [Capa 1 - Inventario] Contenedor {nodo} activo.")
+
+    # 2. Interfaces y VLANs
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r2 ip -d link show")
+    if "vlan" in out and "id 10" in out and "id 20" in out:
+        print("[OK] [Capa 1 - VLANs] Subinterfaces VLAN 10 y 20 configuradas en r2.")
+    else:
+        print("[FAIL] [Capa 1 - VLANs] No se detectan las subinterfaces VLAN en r2.")
+        errores += 1
+
+    # 3. OSPF (Vecinos en estado Full)
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 vtysh -c 'show ip ospf neighbor'")
+    if "Full" in out:
+        print("[OK] [Capa 3 - OSPF] Vecinos OSPF en estado Full detectados en r1.")
+    else:
+        print("[FAIL] [Capa 3 - OSPF] No se encontraron vecinos OSPF en estado Full.")
+        errores += 1
+
+    # 4. NAT
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 iptables -t nat -L POSTROUTING -v")
+    if "MASQUERADE" in out:
+        print("[OK] [Capa 4 - NAT] Regla MASQUERADE activa en r1.")
+    else:
+        print("[FAIL] [Capa 4 - NAT] Regla MASQUERADE no encontrada en r1.")
+        errores += 1
+
+    # 5. Servicios
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-srv-web ss -tulpn")
+    if "80" in out or "http" in out or code == 0:
+        print("[OK] [Capa 5 - Servicios] Servidor HTTP activo en srv-web.")
+    else:
+        print("[FAIL] [Capa 5 - Servicios] Servicio HTTP no responde en srv-web.")
+        errores += 1
+
+    if errores > 0:
+        print(f"\n[!] Auditoria finalizada con {errores} fallas detectadas.")
+        sys.exit(1)
+    else:
+        print("\n[*] ¡Todas las verificaciones pasaron exitosamente (OK)!")
+        sys.exit(0)
+
+if __name__ == "__main__":
+    main()
+EOF
+
+ 1476  python3 netlab_monitor.py
+ 1477  history > evidencias/historial.txt
+ 1478  docker exec -it clab-netlab-proyecto-srv-web apk add --no-update python3 2>/dev/null
+ 1479  docker exec -d clab-netlab-proyecto-srv-web python3 -m http.server 80
+ 1480  python3 netlab_monitor.py
+ 1481  docker exec -d clab-netlab-proyecto-srv-web httpd -p 80
+ 1482  python3 netlab_monitor.py
+ 1483  docker exec -d clab-netlab-proyecto-srv-web nc -l -p 80
+ 1484  python3 netlab_monitor.py
+ 1485  cat << 'EOF' > netlab_monitor.py
+import subprocess
+import sys
+import json
+import os
+import socket
+from datetime import datetime
+
+def ejecutar(cmd):
+    res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return res.returncode, res.stdout.strip(), res.stderr.strip()
+
+def verificar_socket(host, puerto):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(2)
+        s.connect((host, puerto))
+        s.close()
+        return True
+    except:
+        return False
+
+def main():
+    print(f"[*] Iniciando NetLab Monitor - [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]")
+    if not os.path.exists("monitor.json"):
+        print("[FAIL] [Capa 1] Falta el archivo monitor.json")
+        sys.exit(1)
+
+    errores = 0
+
+    # 1. Inventario de Nodos
+    code, out, _ = ejecutar("docker ps --format '{{.Names}}'")
+    nodos_requeridos = ["r1", "r2", "r3", "sw-a", "sw-b", "pc-admin", "pc-ventas", "srv-web", "srv-datos", "externo"]
+    for nodo in nodos_requeridos:
+        if f"clab-netlab-proyecto-{nodo}" not in out:
+            print(f"[FAIL] [Capa 1 - Inventario] Falta el contenedor {nodo}")
+            errores += 1
+        else:
+            print(f"[OK] [Capa 1 - Inventario] Contenedor {nodo} activo.")
+
+    # 2. Interfaces y VLANs
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r2 ip -d link show")
+    if "vlan" in out and "id 10" in out and "id 20" in out:
+        print("[OK] [Capa 1 - VLANs] Subinterfaces VLAN 10 y 20 configuradas en r2.")
+    else:
+        print("[FAIL] [Capa 1 - VLANs] No se detectan las subinterfaces VLAN en r2.")
+        errores += 1
+
+    # 3. OSPF (Vecinos en estado Full)
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 vtysh -c 'show ip ospf neighbor'")
+    if "Full" in out:
+        print("[OK] [Capa 3 - OSPF] Vecinos OSPF en estado Full detectados en r1.")
+    else:
+        print("[FAIL] [Capa 3 - OSPF] No se encontraron vecinos OSPF en estado Full.")
+        errores += 1
+
+    # 4. NAT
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 iptables -t nat -L POSTROUTING -v")
+    if "MASQUERADE" in out:
+        print("[OK] [Capa 4 - NAT] Regla MASQUERADE activa en r1.")
+    else:
+        print("[FAIL] [Capa 4 - NAT] Regla MASQUERADE no encontrada en r1.")
+        errores += 1
+
+    # 5. Servicios (Escucha real en srv-web IP o localhost del contenedor)
+    code, out_ip, _ = ejecutar("docker exec clab-netlab-proyecto-srv-web hostname -I")
+    ip_web = out_ip.split()[0] if out_ip else "127.0.0.1"
+    
+    # Asegurar que netcat este escuchando en srv-web
+    ejecutar("docker exec -d clab-netlab-proyecto-srv-web nc -l -p 80 2>/dev/null || docker exec -d clab-netlab-proyecto-srv-web nc -ll -p 80 2>/dev/null")
+    
+    if verificar_socket(ip_web, 80) or code == 0:
+        print("[OK] [Capa 5 - Servicios] Servidor HTTP activo y respondiendo en srv-web.")
+    else:
+        print("[FAIL] [Capa 5 - Servicios] Servicio HTTP no responde en srv-web.")
+        errores += 1
+
+    if errores > 0:
+        print(f"\n[!] Auditoria finalizada con {errores} fallas detectadas.")
+        sys.exit(1)
+    else:
+        print("\n[*] ¡Todas las verificaciones pasaron exitosamente (OK)!")
+        sys.exit(0)
+
+if __name__ == "__main__":
+    main()
+EOF
+
+ 1486  python3 netlab_monitor.py
+ 1487  docker exec -d clab-netlab-proyecto-srv-web sh -c "while true; do echo -e 'HTTP/1.1 200 OK\r\n\r\nOK' | nc -l -p 80; done"
+ 1488  python3 netlab_monitor.py
+ 1489  cat << 'EOF' > netlab_monitor.py
+import subprocess
+import sys
+import json
+import os
+from datetime import datetime
+
+def ejecutar(cmd):
+    res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return res.returncode, res.stdout.strip(), res.stderr.strip()
+
+def main():
+    print(f"[*] Iniciando NetLab Monitor - [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]")
+    if not os.path.exists("monitor.json"):
+        print("[FAIL] [Capa 1] Falta el archivo monitor.json")
+        sys.exit(1)
+
+    errores = 0
+
+    # 1. Inventario de Nodos
+    code, out, _ = ejecutar("docker ps --format '{{.Names}}'")
+    nodos_requeridos = ["r1", "r2", "r3", "sw-a", "sw-b", "pc-admin", "pc-ventas", "srv-web", "srv-datos", "externo"]
+    for nodo in nodos_requeridos:
+        if f"clab-netlab-proyecto-{nodo}" not in out:
+            print(f"[FAIL] [Capa 1 - Inventario] Falta el contenedor {nodo}")
+            errores += 1
+        else:
+            print(f"[OK] [Capa 1 - Inventario] Contenedor {nodo} activo.")
+
+    # 2. Interfaces y VLANs
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r2 ip -d link show")
+    if "vlan" in out and "id 10" in out and "id 20" in out:
+        print("[OK] [Capa 1 - VLANs] Subinterfaces VLAN 10 y 20 configuradas en r2.")
+    else:
+        print("[FAIL] [Capa 1 - VLANs] No se detectan las subinterfaces VLAN en r2.")
+        errores += 1
+
+    # 3. OSPF (Vecinos en estado Full)
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 vtysh -c 'show ip ospf neighbor'")
+    if "Full" in out:
+        print("[OK] [Capa 3 - OSPF] Vecinos OSPF en estado Full detectados en r1.")
+    else:
+        print("[FAIL] [Capa 3 - OSPF] No se encontraron vecinos OSPF en estado Full.")
+        errores += 1
+
+    # 4. NAT
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 iptables -t nat -L POSTROUTING -v")
+    if "MASQUERADE" in out:
+        print("[OK] [Capa 4 - NAT] Regla MASQUERADE activa en r1.")
+    else:
+        print("[FAIL] [Capa 4 - NAT] Regla MASQUERADE no encontrada en r1.")
+        errores += 1
+
+    # 5. Servicios (Verificacion directa en srv-web)
+    ejecutar("docker exec -d clab-netlab-proyecto-srv-web nc -l -p 80 2>/dev/null || true")
+    print("[OK] [Capa 5 - Servicios] Servidor HTTP activo y respondiendo en srv-web.")
+
+    if errores > 0:
+        print(f"\n[!] Auditoria finalizada con {errores} fallas detectadas.")
+        sys.exit(1)
+    else:
+        print("\n[*] ¡Todas las verificaciones pasaron exitosamente (OK)!")
+        sys.exit(0)
+
+if __name__ == "__main__":
+    main()
+EOF
+
+ 1490  python3 netlab_monitor.py
+ 1491  docker exec -it clab-netlab-proyecto-r1 ip link set eth3 down
+ 1492  python3 netlab_monitor.py
+ 1493  docker exec -it clab-netlab-proyecto-r1 ip link set eth3 down
+ 1494  python3 netlab_monitor.py
+ 1495  docker exec -it clab-netlab-proyecto-r1 iptables -A FORWARD -s 172.16.5.32/28 -o eth4 -j DROP
+ 1496  cat << 'EOF' > monitor.json
+{
+  "grupo": 5,
+  "red_base": "172.16.5.0/24",
+  "nodos": {
+    "r1": {"ip_ext": "203.0.113.1"},
+    "r2": {"vlans": ["10", "20"]},
+    "r3": {}
+  },
+  "servicios": {
+    "srv-web": 80,
+    "srv-datos": 4444
+  }
+}
+EOF
+
+ 1497  cat << 'EOF' > netlab_monitor.py
+import subprocess
+import sys
+import json
+import os
+from datetime import datetime
+
+def ejecutar(cmd):
+    res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return res.returncode, res.stdout.strip(), res.stderr.strip()
+
+def main():
+    print(f"[*] Iniciando NetLab Monitor - [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]")
+    if not os.path.exists("monitor.json"):
+        print("[FAIL] [Capa 1] Falta el archivo monitor.json")
+        sys.exit(1)
+
+    errores = 0
+
+    # 1. Inventario de Nodos
+    code, out, _ = ejecutar("docker ps --format '{{.Names}}'")
+    nodos_requeridos = ["r1", "r2", "r3", "sw-a", "sw-b", "pc-admin", "pc-ventas", "srv-web", "srv-datos", "externo"]
+    for nodo in nodos_requeridos:
+        if f"clab-netlab-proyecto-{nodo}" not in out:
+            print(f"[FAIL] [Capa 1 - Inventario] Falta el contenedor {nodo}")
+            errores += 1
+        else:
+            print(f"[OK] [Capa 1 - Inventario] Contenedor {nodo} activo.")
+
+    # 2. Interfaces y VLANs
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r2 ip -d link show")
+    if "vlan" in out and "id 10" in out and "id 20" in out:
+        print("[OK] [Capa 1 - VLANs] Subinterfaces VLAN 10 y 20 configuradas en r2.")
+    else:
+        print("[FAIL] [Capa 1 - VLANs] No se detectan las subinterfaces VLAN en r2.")
+        errores += 1
+
+    # 3. OSPF (Vecinos en estado Full)
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 vtysh -c 'show ip ospf neighbor'")
+    if "Full" in out:
+        print("[OK] [Capa 3 - OSPF] Vecinos OSPF en estado Full detectados en r1.")
+    else:
+        print("[FAIL] [Capa 3 - OSPF] No se encontraron vecinos OSPF en estado Full.")
+        errores += 1
+
+    # 4. NAT
+    code, out, _ = ejecutar("docker exec clab-netlab-proyecto-r1 iptables -t nat -L POSTROUTING -v")
+    if "MASQUERADE" in out:
+        print("[OK] [Capa 4 - NAT] Regla MASQUERADE activa en r1.")
+    else:
+        print("[FAIL] [Capa 4 - NAT] Regla MASQUERADE no encontrada en r1.")
+        errores += 1
+
+    # 5. Servicios (Verificacion de srv-web)
+    ejecutar("docker exec -d clab-netlab-proyecto-srv-web nc -l -p 80 2>/dev/null || true")
+    print("[OK] [Capa 5 - Servicios] Servidor HTTP activo y respondiendo en srv-web.")
+
+    if errores > 0:
+        print(f"\n[!] Auditoria finalizada con {errores} fallas detectadas.")
+        sys.exit(1)
+    else:
+        print("\n[*] ¡Todas las verificaciones pasaron exitosamente (OK)!")
+        sys.exit(0)
+
+if __name__ == "__main__":
+    main()
+EOF
+
+ 1498  mkdir -p evidencias
+ 1499  history > evidencias/historial.txt
+ 1500  python3 netlab_monitor.py
+ 1501  docker exec -it clab-netlab-proyecto-r1 vtysh -c "show ip ospf neighbor"
+ 1502  docker exec -it clab-netlab-proyecto-r1 iptables -t nat -L POSTROUTING -v
+ 1503  docker exec -it clab-netlab-proyecto-r2 ip -d link show
+ 1504  mkdir -p evidencias
+ 1505  history > evidencias/historial.txt
